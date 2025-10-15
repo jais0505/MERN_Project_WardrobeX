@@ -454,11 +454,6 @@ const productSchemaStructure = new mongoose.Schema({
         type: String,
         required: true
     },
-    categoryId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "categorycollection",
-        required: true
-    },
     subcategoryId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "subcategorycollection",
@@ -514,7 +509,6 @@ app.post("/Product", upload.array("productImages", 5), async (req, res) => {
             shopId,
             productName,
             productDescription,
-            categoryId,
             subcategoryId,
             productPrice,
             fitId,
@@ -582,7 +576,6 @@ try{
             shopId,
             productName,
             productDescription,
-            categoryId,
             subcategoryId,
             productPrice,
             fitId,
@@ -602,7 +595,35 @@ try{
     console.error(err.message);
     res.status(500).send("Server error");
 }
-})
+});
+
+//  Populate productcollection
+
+app.get("/ProductPopulate", async (req, res) => {
+    try {
+        const products = await Product.find()
+        .populate("shopId")
+        .populate({
+            path: "subcategoryId",
+            populate: {
+                path: "categoryId",
+                model: "categorycollection"
+            }
+        })
+        .populate("fitId")
+        .populate("materialId")
+        .populate("brandId");
+
+        if (products.length === 0) {
+            return res.send({ message: "Products not found", products: [] });
+        } else {
+            return res.status(200).send({ products });
+        }
+    } catch (err) {
+        console.error("Error finding products:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 
 
@@ -704,6 +725,35 @@ app.put("/Variant/:id", async (req, res) =>{
         res.status(500).send("Server error");
     }
 });
+
+// Populate Variant
+
+app.get("/VariantPopulate", async (req, res) =>{
+    try{
+        const variant = await Variant.find()
+        .populate({
+            path: "productId",
+            populate: {
+                path: "subcategoryId",
+                populate: {
+                    path: "categoryId"
+                }
+            }
+        })
+        .populate("typeId")
+        .populate("sizeId");
+        if(variant.length === 0){
+            return res.send({message: "Variant not found"});
+        } else{
+            res.send({variant}).status(200);
+        }
+    } catch(err) {
+        console.error("Error finding variant:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+
 
 
 
@@ -810,7 +860,23 @@ app.put("/Order/:id", async (req, res) =>{
         console.error(err.message);
         res.status(500).send("Server error");  
     }
-})
+});
+
+// Populate Order
+
+app.get("/OrderPopulate", async (req, res) =>{
+    try{
+        const order = await Order.find().populate("userId", "userName userEmail");
+        if(order.length === 0){
+            return res.send({message: "Order not found", order: []});
+        } else {
+            res.send({order}).status(200);
+        }
+    } catch(err){
+        console.error("Error Finding Order:", err);
+        res.status(500).json({ message: "Internal server error" })
+    }
+});
 
 
 
@@ -914,7 +980,27 @@ app.put("/OrderItem/:id", async (req, res) => {
         console.error(err.message);
         res.status(500).send("Server error");
     }
-})
+});
+
+// Populate OrderItem
+
+app.get("/OrderItemPopulate", async (req, res) => {
+    try{
+        const item = await OrderItem.find()
+        .populate("orderId")
+        .populate("productId");
+
+        if(item.length === 0){
+            return res.send({message: "Order item not found", item: []});
+        } else {
+            res.send({item}).status(200);
+        }
+    } catch(err) {
+        console.error("Error finding Order item:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
 
 
 
@@ -1010,6 +1096,25 @@ app.put("/WishList/:id", async (req, res) => {
     } catch(err) {
         console.error(err.message);
         res.status(500).send("Server error");
+    }
+});
+
+// Populate WishList
+
+app.get("/WishListPopulate", async (req, res) =>{
+    try{
+        const wishlist = await WishList.find()
+        .populate("userId", "userName userEmail")
+        .populate("productId");
+
+        if(wishlist.length === 0){
+            return res.send({message: "Wish list not found"});
+        } else{
+            res.send({wishlist}).status(200);
+        }
+    } catch(err) {
+        console.error("Error finding wishlist:", err);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -1128,6 +1233,25 @@ app.put("/Complaint/:id", async (req, res) => {
     }
 });
 
+// Populate Complaint
+
+app.get("/ComplaintPopulate", async (req, res) => {
+    try{
+        const complaint  = await Complaint.find()
+        .populate("userId", "userName userEmail")
+        .populate("productId");
+
+        if(complaint.length === 0){
+            return res.json({message: "Complaint not found"});
+        } else {
+            res.send({complaint}).status(200);
+        }
+    } catch (err) {
+        console.error("Error finding wishlist:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 
 
 
@@ -1239,6 +1363,26 @@ app.put("/RatingReview/:id", async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server error");
+    }
+});
+
+// Populate RatingReview
+
+app.get("/RatingReviewPopulate", async (req, res) => {
+    try{
+        const ratingreview  = await ReviewRating.find()
+        .populate("userId", "userName userEmail")
+        .populate("productId")
+        .populate("orderId");
+
+        if(ratingreview.length === 0){
+            return res.json({message: "Raitng review not found"});
+        } else {
+            res.send({ratingreview}).status(200);
+        }
+    } catch (err) {
+        console.error("Error finding ratingreview:", err);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -1377,7 +1521,7 @@ app.post("/Subcategory", async (req, res) => {
 
 app.get("/Subcategory", async (req, res) => {
     try {
-        const subcategory = await Subcategory.find().populate("categoryId", "categoryName");
+        const subcategory = await Subcategory.find();
         if (subcategory.length === 0) {
             return res.send({ message: "No subcategories found", subcategory: [] });
         } else {
@@ -1425,6 +1569,22 @@ app.put("/Subcategory/:id", async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server error");
+    }
+});
+
+// Populate subcategory and category
+
+app.get("/SubcategoryPopulate", async (req, res) => {
+    try {
+        const subcategory = await Subcategory.find().populate("categoryId");
+        if (subcategory.length === 0) {
+            return res.send({ message: "No subcategories found", subcategory: [] });
+        } else {
+            res.send({ subcategory }).status(200);
+        }
+    } catch (err) {
+        console.error("Error finding Subcategories:", err);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -2065,7 +2225,23 @@ app.put("/Stock/:id", async (req, res) => {
     }
 });
 
+// Populate Stock
 
+app.get("/StockPopulate", async (req, res) => {
+    try{
+        const stock = await Stock.find()
+        .populate("variantId");
+        
+        if(stock.length === 0){
+           return res.json({message: "Stock not found"}); 
+        } else{
+            res.send({stock}).status(200);
+        }
+    } catch(err) {
+         console.error("Error finding stock:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 
 
@@ -2169,3 +2345,19 @@ app.put("/ProductColor/:id", async (req, res) => {
     }
 });
 
+app.get("/ProductColorPopulate", async (req, res) => {
+    try {
+        const productColors = await ProductColor.find()
+        .populate("colorId")
+        .populate("variantId");
+
+        if (productColors.length === 0) {
+            return res.send({ message: "No product colors found", productColors: [] });
+        } else {
+            res.send({ productColors }).status(200);
+        }
+    } catch (err) {
+        console.error("Error finding Product Colors:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
