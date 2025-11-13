@@ -1,0 +1,194 @@
+/* Allow scroll inside flex children */
+.main_container,
+.data_table,
+.table_wrapper {
+  min-height: 0;
+}
+
+.main_container{
+    margin: 5px;
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.table_wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.table_wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.table_wrapper table thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.header{
+    margin-top: 10px;
+    display: flex;
+    padding-bottom: 10px;
+    box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+.headtext{
+    color: black;
+    font-size: 28px;
+    font-weight: 700;
+}
+.button{
+    margin-left: auto;
+    margin-right: 5px;
+}
+.btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #111;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 5px;
+}
+.btn_text{
+    font-size: 18px;
+}
+.btn_icon{
+    font-size: 22px;
+}
+
+.btn:hover{
+   background-color: rgb(51, 47, 47);
+}
+
+.data_table{
+    margin-top: 5px;
+    box-shadow: 0px -2px 6px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
+
+.table thead {
+  background-color: #f9fafb;
+  text-align: left;
+  color: #555;
+  border-bottom: 1px solid #eee;
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fb;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+
+.delete {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.delete:hover {
+  background-color: #fecaca;
+}
+
+.edit {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.edit:hover {
+  background-color: #bae6fd;
+}
+.form {
+  width: 100%;
+  background: #ffffff;
+  padding: 24px 28px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation-duration: 0.4s;
+  box-shadow: 0px -2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  width: 100%;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1c1c1c;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.input:focus {
+  border-color: #333;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.btnGroup {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.saveBtn {
+  width: 200px;
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.saveBtn:hover {
+  background: #333;
+  transform: translateY(-1px);
+}

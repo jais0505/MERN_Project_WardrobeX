@@ -1,0 +1,55 @@
+.bar{
+    width: 100%;
+    background: black;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    position: relative;
+
+    animation: slideDown 0.5s ease forwards;
+}
+.bar_msg{
+    font-size: 16px;
+    font-weight: 400;
+}
+.close_opt{
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 50px;
+    cursor: pointer;
+    transition: 0.5s ease;
+}
+.close_opt:hover{
+    color: burlywood;
+}
+.close_icon{
+    font-size: 24px;
+}
+
+/* Slide Down Animation */
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Slide Up Animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+/* Apply when closing */
+.bar.slideUp {
+  animation: slideUp 0.2s ease forwards;
+}

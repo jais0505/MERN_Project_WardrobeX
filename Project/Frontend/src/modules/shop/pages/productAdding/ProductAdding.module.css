@@ -1,0 +1,104 @@
+/* ---------- Container ---------- */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f9f9f9; /* light gray background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}
+
+/* ---------- Form Box ---------- */
+.formBox {
+  background-color: #fff; /* white form area */
+  width: 90%;
+  max-width: 600px;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eee;
+}
+
+/* ---------- Heading ---------- */
+.heading {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ---------- Form Layout ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* ---------- Input Fields ---------- */
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: #000;
+}
+
+/* ---------- Row Layout ---------- */
+.formRow {
+  display: flex;
+  gap: 15px;
+}
+
+/* ---------- Submit Button ---------- */
+.submitContainer {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.submitBtn {
+  background-color: #000;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submitBtn:hover {
+  background-color: #333;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .formRow {
+    flex-direction: column;
+  }
+}

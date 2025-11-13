@@ -1,0 +1,214 @@
+.navbar_container{
+    min-height: 50px;
+    width: 100%;
+    background-color: #edecec;
+    flex: 1;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    display: flex;
+}
+.search_container {
+  max-width: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  margin: 8px 15px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: 90%;
+  color: #aaa;
+}
+
+.search_icon {
+  color: gray;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.search_input{
+    background: transparent;
+    border: none;
+    color: black;
+    outline: none;
+    font-size: 15px;
+    flex: 1;
+}
+.notification{
+    height: 100%;
+    margin-left: auto;
+}
+.notification_icon{
+    font-size: 30px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+.profile_container {
+  margin-left: 30px;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.profile_img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile_name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dropdown_menu {
+  position: absolute;
+  top: 60px;                 /* Adjust based on navbar height */
+  right: 20px;
+  background: white;
+  padding: 12px 0;
+  width: 180px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 25px rgba(0,0,0,0.35);
+  z-index: 999;              /* Ensures above Hero */
+  animation: fadeIn .2s ease;
+}
+.menu_options{
+  padding: 10px 14px;
+  color: #555;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.menu_options:hover{
+  background: #f7f7f7;     
+  transform: translateY(-2px); 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  border-radius: 5px;
+}
+
+.option_icons_logout{
+  color: red;
+}
+
+.divider {
+  height: .5px;
+  background-color: #aaa;
+  margin: 10px 0;
+}
+
+
+/* Smooth fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.notification_popup{
+  position: absolute;
+  top: 60px;
+  right: 30px;
+  width: 400px;
+  height: 600px;
+  box-shadow: 0px 4px 25px rgba(0,0,0,0.35);
+  background-color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 999;              /* Ensures above Hero */
+  animation: fadeIn .2s ease;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.notification_heading{
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: .1px solid #999;
+}
+.heading_text{
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.notification_list{
+  display: flex;
+  padding: 8px 8px;
+  color: black;
+  font-size: 20px;
+  cursor: pointer;
+  /* border-bottom: .1px solid gray; */
+}
+.notification_list:hover{
+  background: #f7f7f7;  
+  box-shadow: 2px 1px 4px rgba(0,0,0,0.12);
+  transform: translateY(-2px); 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.image_container{
+  width: 20%;
+  height: 75px;
+  /* background-color: lightcoral; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 5px;
+}
+
+.list_image{
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.message_container{
+  width: 80%;
+  height: 75px;
+}
+.message_head{
+  display: flex;
+  padding-top: 5px;
+}
+.head_name{
+  align-items: flex-start;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.head_time{
+  margin-left: auto;
+  margin-right: 5px;
+  font-size: 15px;
+  color: gray;
+}
+
+.message_content{
+  font-size: 16px;
+  color: gray;
+  margin-left: 8px;
+  margin-top: 2px;
+}
+
+
+.bottom_option{
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: .1px solid #999;
+  margin-top: auto;
+}
+
+.notification_divider{
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+  border-radius: 2px;
+}

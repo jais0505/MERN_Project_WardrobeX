@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 const cors = require("cors");
+const mailer = require('nodemailer');
+
 // const bodyParser = require("body-parser");
 const port = 5000;
 const multer = require("multer");
@@ -38,6 +40,31 @@ app.listen(port, () => {
         process.exit(1);
     }
 });
+
+var transporter = mailer.createTransport({
+  service: "gmail",
+  auth: {
+      user: "contact.wardrobe.official@gmail.com", //from email Id
+      pass: "ceomswufmvsviqcl", // App password created from google account
+  },
+});
+function sendEmail(to, content, subject) {
+  const mailOptions = {
+      from: "contact.wardrobe.official@gmail.com", //from email Id for recipient can view
+      to,
+      subject: subject,
+      html: content,
+      
+  };
+  transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+          console.log(error);
+      } else {
+          console.log("Email sented");
+      }
+  });
+}
+
 
 app.get('/Test', (req, res) => {
     console.log(req.body);
@@ -83,6 +110,7 @@ app.post("/Admin", async (req, res) => {
         });
 
         await admin.save();
+         
 
         res.json({ mesasge: "Admin inserted successfully" });
 
@@ -188,10 +216,12 @@ const shopSchemaStructure = new mongoose.Schema({
     },
     shopImage: {
         type: String,
+        required: true
 
     },
     shopProof: {
         type: String,
+        required: true
 
     },
     PANNO: {
@@ -206,9 +236,15 @@ const shopSchemaStructure = new mongoose.Schema({
         type: String,
         required: true
     },
+    placeId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "placecollection",
+        // required: true
+    },
     shopStatus: {
-        type: Boolean,
-        default: false,
+        type: String,
+        enum: ["pending", "rejected", "verified"],
+        default: "pending",
     }
 });
 
@@ -219,7 +255,7 @@ app.post("/Shop", upload.fields([
     { name: "shopProof", maxCount: 1 },
 ]), async (req, res) => {
     try {
-        const { shopName, shopEmail, shopContact, shopPassword, shopAddress, PANNO, GSTNO, shopLocation } = req.body;
+        const { shopName, shopEmail, shopContact, shopPassword, shopAddress, PANNO, GSTNO, shopLocation, placeId } = req.body;
 
         let shop = await Shop.findOne({ shopEmail });
 
@@ -227,8 +263,10 @@ app.post("/Shop", upload.fields([
             return res.json({ message: "Shop already exists" });
         }
 
-        const shopImage = req.files.shopImage ? "/images/" + req.files.shopImage[0].filename : "";
-        const shopProof = req.files.shopProof ? "/images/" + req.files.shopProof[0].filename : "";
+        const baseUrl = `http://127.0.0.1:${port}`;
+
+        const shopImage = req.files.shopImage ? `${baseUrl}/images/${req.files.shopImage[0].filename}` : "";
+        const shopProof = req.files.shopProof ? `${baseUrl}/images/${req.files.shopProof[0].filename}` : "";
 
         shop = new Shop({
             shopName,
@@ -240,13 +278,14 @@ app.post("/Shop", upload.fields([
             GSTNO,
             shopLocation,
             shopImage,
-            shopProof
+            shopProof,
+            placeId
 
         });
 
         await shop.save();
 
-        res.json({ message: "Shop registartion completed successfully", shop });
+        res.json({ message: "Registration completed successfully! Please wait for verification.", shop });
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server error");
@@ -264,6 +303,23 @@ app.get("/Shop", async (req, res) =>{
         }
     } catch(err) {
         console.error("Error finding shops:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+// Fetch specific shop data
+app.get("/Shop/:id", async (req, res) =>{
+    try{ 
+        const shopId = req.params.id; 
+        const shop = await Shop.findById(shopId).populate({path: "placeId", populate: {path: "districtId"}});
+        
+        if(!shop){
+            return res.status(404).json({message: "Shop not found"});
+        }
+
+        res.status(200).json({shop});
+    } catch(err) {
+        console.error("Error fetching shop details:", err);
         res.status(500).json({message: "Internal server error"});
     }
 });
@@ -319,6 +375,103 @@ app.put("/Shop/:id", upload.fields([
     }
 });
 
+// Shop Verification
+
+app.put(`/ShopVerification/:id`, async (req, res) => {
+    try{
+        const shopId = req.params.id;
+        const { status } = req.body;
+
+        let shop = await Shop.findByIdAndUpdate(shopId,{shopStatus: status},{new: true});
+        
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+        const isVerified = status === "verified";
+        const message = isVerified ? "Shop verified successfully" : "Shop rejected successfully";
+        
+        const content = `
+<html>
+<head>
+  <title>Shop Verification Status</title>
+  <style>
+    .container {
+      width: 90%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f2f2f2;
+      font-family: Arial, sans-serif;
+    }
+
+    .box {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333333;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      font-size: 32px;
+      font-weight: bold;
+      color: ${isVerified ? "#00b300" : "#e60000"};
+      margin: 10px 0;
+    }
+
+    .message {
+      font-size: 16px;
+      color: #555555;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      font-size: 13px;
+      color: #888888;
+      margin-top: 25px;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="box">
+      <div class="title">Shop Verification Update</div>
+      <div class="status">${isVerified ? "✅ Verified" : "❌ Rejected"}</div>
+      <div class="message">
+        Hi <strong>${shop.shopName}</strong>,<br><br>
+        ${
+          isVerified
+            ? "We are happy to inform you that your shop has been successfully verified. You can now access all the platform features by login."
+            : "Unfortunately, your shop verification request has been rejected. Please review your submitted details and reapply for verification. If you need any help contact admin."
+        }
+      </div>
+      <div class="footer">
+        Thank you for being a part of our platform.<br>
+        <strong>Wardrobe</strong>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`;
+    sendEmail(shop.shopEmail, content, status ? "Shop Registration Verified" : "Shop registrarion Rejected");
+        res.status(200).json({ message, shop });
+    } catch(err) {
+        console.error("Error verifying shop:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+})
+
 
 
 
@@ -338,7 +491,7 @@ const userSchemaStructure = new mongoose.Schema({
     },
     userContact: {
         type: String,
-        required: true
+        // required: true
     },
     userPassword: {
         type: String,
@@ -346,11 +499,16 @@ const userSchemaStructure = new mongoose.Schema({
     },
     userAddress: {
         type: String,
-        required: true
+        // required: true
     },
     userLocation: {
         type: String,
         required: true
+    },
+    placeId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "placecollection",
+        // required: true
     }
 });
 
@@ -358,7 +516,9 @@ const User = mongoose.model("usercollection", userSchemaStructure);
 
 app.post("/User", async (req, res) => {
     try {
-        const { userName, userEmail, userContact, userPassword, userAddress, userLocation } = req.body;
+        const { userName, userEmail, userContact, userPassword, userAddress, userLocation, placeId } = req.body;
+
+        console.log(req.body);
 
         let user = await User.findOne({ userEmail });
 
@@ -372,12 +532,13 @@ app.post("/User", async (req, res) => {
             userContact,
             userPassword,
             userAddress,
-            userLocation
+            userLocation,
+            placeId
         });
 
         await user.save();
 
-        res.json({ message: "User inserted successfully" });
+        res.json({ message: "User registartion successfully completed" });
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server error");
@@ -386,7 +547,7 @@ app.post("/User", async (req, res) => {
 
 app.get("/User", async (req, res) =>{
     try{
-       const user = await User.find();
+       const user = await User.find().populate("placeId");
        if(user.length === 0){
         return res.send({message: "Users not found", user :[]});
        } else {
@@ -463,12 +624,6 @@ const productSchemaStructure = new mongoose.Schema({
         type: String,
         required: true
     },
-    productImages: [
-        {
-            type: String,
-            required: true
-        }
-    ],
     fitId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "fitcollection",
@@ -488,7 +643,7 @@ const productSchemaStructure = new mongoose.Schema({
 
 const Product = mongoose.model("productcollection", productSchemaStructure);
 
-app.post("/Product", upload.array("productImages", 5), async (req, res) => {
+app.post("/Product", async (req, res) => {
     try {
         const { shopId, productName, productDescription, categoryId, subcategoryId, productPrice, fitId, materialId, brandId } = req.body;
 
@@ -497,13 +652,6 @@ app.post("/Product", upload.array("productImages", 5), async (req, res) => {
         if (product) {
             return res.json({ message: "Product already exists" });
         }
-
-        const productImagesFiles = req.files;
-        if (!productImagesFiles || productImagesFiles.length === 0) {
-            return res.status(400).json({ message: "At least one product image is required" });
-        }
-
-        const productImages = productImagesFiles.map(file => "images" + file.filename);
 
         product = new Product({
             shopId,
@@ -514,7 +662,6 @@ app.post("/Product", upload.array("productImages", 5), async (req, res) => {
             fitId,
             materialId,
             brandId,
-            productImages,
 
         });
 
@@ -559,17 +706,10 @@ app.delete("/Product/:id", async (req, res) => {
     }
 });
 
-app.put("/Product/:id", upload.array("productImages", 5), async (req, res) => {
+app.put("/Product/:id", async (req, res) => {
 try{
     const productId = req.params.id;
     const { shopId, productName, productDescription, categoryId, subcategoryId, productPrice, fitId, materialId, brandId } = req.body;
-
-    const productImagesFiles = req.files;
-    if (!productImagesFiles || productImagesFiles.length === 0) {
-        return res.status(400).json({ message: "At least one product image is required" });
-    }
-
-    const productImages = productImagesFiles.map(file => "images" + file.filename);
 
     let product = await Product.findByIdAndUpdate(productId,
         {
@@ -581,7 +721,6 @@ try{
             fitId,
             materialId,
             brandId,
-            productImages,
         },
         {new: true}
     );
@@ -598,7 +737,6 @@ try{
 });
 
 //  Populate productcollection
-
 app.get("/ProductPopulate", async (req, res) => {
     try {
         const products = await Product.find()
@@ -752,6 +890,111 @@ app.get("/VariantPopulate", async (req, res) =>{
         res.status(500).json({message: "Internal server error"});
     }
 });
+
+
+
+
+
+
+
+
+const imageSchemaStructure = new mongoose.Schema({
+    productImage: {
+        type: String,
+        required: true
+    },
+    variantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "variantcollection",
+        required: true
+    }
+});
+
+const Image = mongoose.model("imagecollection", imageSchemaStructure);  
+
+app.post("/Image", upload.single("productImage"),async (req, res) => {
+    try{
+        console.log("File recevied:", req.file);
+        console.log("Body recevied:", req.body);
+
+        const { variantId } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const image = new Image({
+            productImage : req.file.filename,
+            variantId,
+        })
+        
+        await image.save();
+
+        res.json({message: "Product image inserted", data: image});
+    } catch (err) {
+        console.error("Error uploading image:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get("/Image/:id", async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const image = await Image.findById(imageId).populate("variantId");
+
+        if (!image) {
+            return res.json({ message: "Image not found" });
+        }
+
+        res.json({ message: "Image fetched successfully", image });
+
+    } catch (err) {
+        console.error("Error fetching image:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.delete("/Image/:id", async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const deletedImage = await Image.findByIdAndDelete(imageId);
+
+        if (!deletedImage) {
+            return res.json({ message: "Image not found" });
+        }
+
+        res.json({ message: "Image deleted successfully", deletedImage });
+
+    } catch (err) {
+        console.error("Error deleting image:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.put("/Image/:id", upload.single("productImage"), async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const { variantId } = req.body;
+
+        const updateData = {};
+        if (req.file) updateData.productImage = req.file.filename;
+        if (variantId) updateData.variantId = variantId;
+
+        const updatedImage = await Image.findByIdAndUpdate(imageId, updateData, { new: true });
+
+        if (!updatedImage) {
+            return res.json({ message: "Image not found" });
+        }
+
+        res.json({ message: "Image updated successfully", updatedImage });
+
+    } catch (err) {
+        console.error("Error updating image:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+
 
 
 
@@ -2345,6 +2588,8 @@ app.put("/ProductColor/:id", async (req, res) => {
     }
 });
 
+// Populate ProductColor
+
 app.get("/ProductColorPopulate", async (req, res) => {
     try {
         const productColors = await ProductColor.find()
@@ -2359,5 +2604,296 @@ app.get("/ProductColorPopulate", async (req, res) => {
     } catch (err) {
         console.error("Error finding Product Colors:", err);
         res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+const districtSchemaStructure = new mongoose.Schema({
+    districtName: {
+        type: String,
+        required: true
+    }
+});
+
+const District = mongoose.model("districtcollection", districtSchemaStructure);
+
+app.post("/District", async (req, res) =>{
+    try{
+        const {districtName} = req.body;
+        let district = await District.findOne({districtName});
+
+        if(district) {
+            return res.json({message: "District already existing"});
+        }
+
+        district = new District({
+            districtName,
+        });
+
+        await district.save();
+         let content=` 
+ <html>
+<head>
+    <title>OTP Email</title>
+    <style>
+        /* Define the style for the container */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Define the style for the OTP box */
+        .otp-box {
+            width: 90%;
+             max-width: 600px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        /* Define the style for the OTP text */
+        .otp-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333333;
+        }
+
+        /* Define the style for the OTP number */
+        .otp-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 10px;
+        }
+
+        /* Define the style for the instructions text */
+        .instructions {
+            font-size: 14px;
+            color: #666666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Display OTP in an improved email view -->
+    <div class="container">
+        <div class="otp-box">
+            <div class="otp-text">One-Time Password (OTP)</div>
+            <div class="otp-number">123456</div>
+            <div class="instructions">Please use the above OTP to verify your account.</div>
+        </div>
+    </div>
+</body>
+</html> `;   
+  sendEmail('abcd5050@gmail.com',content,'verify');  
+
+        res.json({message: "District inserted successfully"});
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get("/District", async (req, res) =>{
+    try{
+        const district = await District.find();
+
+        if(district.length === 0){
+            return res.send({message: "No ditricts found", district: []});
+        } else {
+            res.send({district}).status(200);
+        }
+    } catch (err) {
+        console.error("Error Finding Categories:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+app.delete("/District/:id", async (req, res) =>{
+    try{
+        const districtId = req.params.id;
+        const deleteDistrict = await District.findByIdAndDelete(districtId);
+
+        if(!deleteDistrict) {
+            return res.json({message: "District not found"});
+        } else {
+            res.json({message: "District deleted successfully", deleteDistrict});
+        }
+    } catch (err) {
+        console.error("Error deleting district", err);
+        res.status(500).json({message: "Internal serve erro"});
+    }
+});
+
+app.put("/District/:id", async (req, res) =>{
+    try{
+        const districtId = req.params.id;
+        const {districtName} = req.body;
+        let districtEdit = await District.findByIdAndUpdate(districtId, {districtName}, {new: true});
+
+        if(!districtEdit) {
+            return res.json({message: "District not found"});
+        } else {
+            res.json({message: "District updated successfully"});
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+const placeSchemaStructure = new mongoose.Schema({
+    placeName: {
+        type: String,
+        required: true
+    },
+    districtId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "districtcollection",
+        required: true
+    }
+});
+
+const Place = mongoose.model("placecollection", placeSchemaStructure);
+
+app.post("/Place", async (req, res) => {
+    try {
+        const { placeName, districtId } = req.body;
+
+        let place = await Place.findOne({ placeName });
+
+        if (place) {
+            return res.json({ message: "Place already exists" });
+        }
+
+        place = new Place({
+            placeName,
+            districtId
+        });
+
+        await place.save();
+        res.json({ message: "Place inserted successfully" });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get("/Place", async (req, res) => {
+    try {
+        const place = await Place.find();
+        if (place.length === 0) {
+            return res.send({ message: "No places found", places: [] });
+        }
+        res.status(200).send({ place });
+
+    } catch (err) {
+        console.error("Error fetching places:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.delete("/Place/:id", async (req, res) => {
+    try {
+        const placeId = req.params.id;
+        const deletedPlace = await Place.findByIdAndDelete(placeId);
+
+        if (!deletedPlace) {
+            return res.json({ message: "Place not found" });
+        }
+
+        res.json({ message: "Place deleted successfully", deletedPlace });
+
+    } catch (err) {
+        console.error("Error deleting place:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.put("/Place/:id", async (req, res) => {
+    try {
+        const placeId = req.params.id;
+        const { placeName, districtId } = req.body;
+
+        let place = await Place.findByIdAndUpdate(
+            placeId,
+            { placeName, districtId },
+            { new: true }
+        );
+
+        if (!place) {
+            return res.json({ message: "Place not found" });
+        }
+
+        res.json({ message: "Place updated successfully" });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+
+//Place populate
+
+app.get("/PlacePopulate", async (req, res) => {
+    try {
+        const place = await Place.find().populate("districtId");
+
+        if (place.length === 0) {
+            return res.send({ message: "No places found", place: [] });
+        }
+
+        res.status(200).send({ place });
+
+    } catch (err) {
+        console.error("Error populating places:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+//-------Login-------
+app.post('/Login', async (req, res) => {
+    const {email, password} = req.body;
+    const user = await User.findOne({userEmail: email, userPassword: password});
+    const admin = await Admin.findOne({adminEmail: email, adminPassword: password});
+    const shop = await Shop.findOne({shopEmail: email, shopPassword: password});
+    if(user){
+        return res.send({
+            role: "user",
+            id: user._id,
+            name: user.userName,
+            message: "Login successful"
+        });
+    } else if(admin) {
+        return res.send({
+            role: "admin",
+            id: admin._id,
+            message: "Login successful"
+        })
+    }else if(shop){
+        if(shop.shopStatus === "verified"){
+            return res.send({
+                role: "shop",
+                id: shop._id,
+                message: "Login successful"
+            });
+        } else if(shop.shopStatus === "rejected"){
+            return res.send({
+                message: "Sorry, your shop registration has been rejected. You cannot login. Please contact the admin for further assistance."
+            });
+        } else if(shop.shopStatus === "pending") {
+            return res.send({
+                message: "Your shop is not verified yet. Please wait for admin approval."
+            });
+        }
+        
+    } else {
+        return res.status(401).json({message: "Invalid email or passowrd"});
     }
 });

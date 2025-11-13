@@ -1,0 +1,152 @@
+.sidebar {
+  min-height: 100vh;
+  color: white;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.8s ease; /* <-- only this */
+  overflow: hidden;
+}
+
+.top{
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 20px;
+}
+.logo{
+    font-size: 24px;
+}
+.logo_img{
+  width: 30px;
+  height: auto;
+}
+.adjusting_icon{
+    font-size: 24px;
+    margin-right: 5px;
+    margin-left: 8px;
+}
+.center{
+    margin-top: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
+    flex: 1; 
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.search_container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e1e1e;
+  margin-left: 15px;
+  margin-right: 15px;
+  padding: 8px 12px;
+  border-radius: 15px;
+  width: 90%;
+  color: #aaa;
+}
+.search_containershort {
+  display: flex;
+  flex-shrink: calc(10);
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e1e1e;
+  margin-left: 15px;
+  margin-right: 15px;
+  padding: 8px;
+  border-radius: 15px;
+  width: 55%;
+  color: #aaa;
+}
+.search_icon {
+  color: #aaa;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+.search_input{
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    font-size: 14px;
+    flex: 1;
+}
+.shortcut {
+  color: #555;
+  font-size: 12px;
+  margin-left: 10px;
+}
+ul{
+    list-style: none;
+    margin-top: 15px;
+}
+li{
+    color: #aaa;
+    display: flex;
+    align-items:  center;
+    padding: 10px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+li:hover{
+    color: white;
+    background-color: #383938;
+    border-radius: 5px;
+}
+.activeMenu li {
+  background-color: #383938;
+  border-left: 3px solid #fff;
+  border-radius: 5px;
+}
+
+.activeMenu li span {
+  font-weight: 600;
+  color: white;
+}
+
+.activeMenu li .icon {
+  color: white;
+}
+
+.icon{
+    font-size: 22px;
+}
+span{
+    font-size: 16px;
+    font-weight: 600;
+    margin-left: 10px;
+}
+.divider {
+  height: .5px;
+  background-color: #383938;
+  margin: 10px 0;
+}
+.bottom_container{
+    padding: 15px;
+    margin-top: auto;
+}
+.profile_container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.profile_img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%; 
+  object-fit: cover;
+}
+.profile_name {
+  font-size: 16px;
+  font-weight: 600;
+}
+.profile_icon {
+  font-size: 20px;
+  margin-left: auto;
+  margin-right: 10px;
+  color: #aaa;
+}

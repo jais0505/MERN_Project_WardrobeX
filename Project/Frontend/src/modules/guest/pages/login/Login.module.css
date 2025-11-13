@@ -1,0 +1,103 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #edecec;
+}
+
+.logincard {
+    width: 70%;
+    max-width: 1200px; 
+    height: 85vh;       
+    max-height: 800px;  
+    display: flex;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.formcard{
+    height: 100%;
+    flex: 1;
+    background-color: #FFF;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    
+}
+ .imagecard {
+    height: 100%;
+    flex: 1;
+    background-image: url('../../../../assets/images/FashionModel.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.brandName {
+  font-size: 2.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
+}
+.inputGroup {
+  width: 90%;
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  padding: .8rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.eyeIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%; 
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+  margin-top: 5px;
+}
+
+.eyeIcon:hover {
+  color: black;
+}
+.registerText {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.registerLink {
+  color: black;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.registerLink:hover {
+  text-decoration: underline;
+}
+
+.loginButton {
+  width: 90%;
+  background-color: black;
+  color: white;
+  padding: 1rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
