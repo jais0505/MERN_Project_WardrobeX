@@ -621,7 +621,7 @@ const productSchemaStructure = new mongoose.Schema({
         required: true
     },
     productPrice: {
-        type: String,
+        type: Number,
         required: true
     },
     fitId: {
@@ -637,15 +637,29 @@ const productSchemaStructure = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "brandcollection",
         required: true
+    },
+    typeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "typecollection",
+        required: true
+    },
+    // Singel Image
+    productImage: {
+    type: String,
+    required: true
     }
 
 });
 
 const Product = mongoose.model("productcollection", productSchemaStructure);
 
-app.post("/Product", async (req, res) => {
+app.post("/Product", upload.single("productImage"), async (req, res) => {
     try {
-        const { shopId, productName, productDescription, categoryId, subcategoryId, productPrice, fitId, materialId, brandId } = req.body;
+        const { shopId, productName, productDescription, subcategoryId, productPrice, fitId, materialId, brandId, typeId } = req.body;
+
+        if (!req.file) {
+            return res.status(400).json({ message: "Product image is required" });
+        }
 
         let product = await Product.findOne({ productName });
 
@@ -662,7 +676,8 @@ app.post("/Product", async (req, res) => {
             fitId,
             materialId,
             brandId,
-
+            typeId,
+            productImage: req.file.filename
         });
 
         await product .save();
@@ -683,6 +698,34 @@ app.get("/Product", async (req, res) => {
             return res.send({ message: "Products not found", products: [] });
         } else {
             return res.status(200).send({ products });
+        }
+    } catch (err) {
+        console.error("Error finding products:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.get("/Product/:id", async (req, res) => {
+    try {
+        const productId = req.params.id;
+
+        const product = await Product.findById(productId)
+        .populate({
+            path: "subcategoryId",
+            populate: {
+                path: "categoryId",
+                model: "categorycollection"
+            }
+        })
+        .populate("fitId")
+        .populate("typeId")
+        .populate("brandId")
+        .populate("materialId");
+
+        if (!product) {
+            return res.send({ message: "Product not found"});
+        } else {
+            return res.status(200).send({ product });
         }
     } catch (err) {
         console.error("Error finding products:", err);
@@ -777,14 +820,9 @@ const variantSchemaStructure = new mongoose.Schema({
         ref: "productcollection",
         required: true
     },
-    typeId: {
+    colorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "typecollection",
-        required: true
-    },
-    sizeId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "sizecollection",
+        ref: "colorcollection",
         required: true
     }
 });
@@ -793,9 +831,9 @@ const Variant = mongoose.model("variantcollection", variantSchemaStructure);
 
 app.post("/Variant", async (req, res) =>{
     try{
-        const {productId, typeId, sizeId} = req.body;
+        const {productId, colorId} = req.body;
 
-        let variant = await Variant.findOne({productId, typeId, sizeId});
+        let variant = await Variant.findOne({productId, colorId});
 
         if(variant){
             return res.json({message: "Variant already exists"});
@@ -803,8 +841,7 @@ app.post("/Variant", async (req, res) =>{
 
         variant = new Variant({
             productId,
-            typeId,
-            sizeId
+            colorId,
         });
 
         await variant.save();
@@ -818,12 +855,44 @@ app.post("/Variant", async (req, res) =>{
 
 app.get("/Variant", async (req, res) =>{
     try{
-        const variant = await Variant.find();
+        const variant = await Variant.find().populate("colorId");
         if(variant.length === 0){
             return res.send({message: "Variant not found"});
         } else{
             res.send({variant}).status(200);
         }
+    } catch(err) {
+        console.error("Error finding variant:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+app.get("/Variant/:id", async (req, res) =>{
+    try{
+        const variantId = req.params.id
+
+        const variant = await Variant.findById(variantId).populate("colorId").populate("productId");
+        if(!variant){
+            return res.send({message: "Variant not found"});
+        } else{
+            res.send({variant}).status(200);
+        }
+    } catch(err) {
+        console.error("Error finding variant:", err);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
+
+app.get("/Variant/Product/:id", async (req, res) =>{
+    try{
+        const productId = req.params.id
+
+        const variants = await Variant.find({productId}).populate("colorId").populate("productId");
+            if (!variants || variants.length === 0) {
+                return res.status(404).json({ message: "No variants found for this product" });
+            } else{
+                res.send({variants}).status(200);
+            }
     } catch(err) {
         console.error("Error finding variant:", err);
         res.status(500).json({message: "Internal server error"});
@@ -878,8 +947,7 @@ app.get("/VariantPopulate", async (req, res) =>{
                 }
             }
         })
-        .populate("typeId")
-        .populate("sizeId");
+        .populate("colorId");
         if(variant.length === 0){
             return res.send({message: "Variant not found"});
         } else{
@@ -890,6 +958,69 @@ app.get("/VariantPopulate", async (req, res) =>{
         res.status(500).json({message: "Internal server error"});
     }
 });
+
+
+
+
+
+
+const variantSizeSchemaStructure = new mongoose.Schema({
+    variantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "variantcollection",
+        required: true
+    },
+    sizeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "sizecollection",
+        required: true,
+    }
+});
+
+variantSizeSchemaStructure.index({ variantId: 1, sizeId: 1 }, { unique: true });
+
+const VariantSize = mongoose.model("variantsizecollection", variantSizeSchemaStructure);
+
+app.post("/VariantSize", async (req, res) => {
+    try {
+        const { variantId, sizeId } = req.body;
+
+        let sizeEntry = await VariantSize.findOne({ variantId, sizeId });
+
+        if (sizeEntry) {
+            return res.json({ message: "Size already exists for this variant" });
+        }
+
+        sizeEntry = new VariantSize({
+            variantId,
+            sizeId,
+        });
+
+        await sizeEntry.save();
+
+        res.json({ message: "Variant size added", sizeEntry });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get("/VariantSize/variant/:variantId", async (req, res) => {
+    try {
+        const { variantId } = req.params;
+
+        const sizes = await VariantSize.find({ variantId })
+            .populate("sizeId");
+
+        res.json({ sizes });
+    } catch (err) {
+        console.error("Error fetching sizes:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+
 
 
 
@@ -912,25 +1043,30 @@ const imageSchemaStructure = new mongoose.Schema({
 
 const Image = mongoose.model("imagecollection", imageSchemaStructure);  
 
-app.post("/Image", upload.single("productImage"),async (req, res) => {
+app.post("/Image", upload.array("productImage", 5),async (req, res) => {
     try{
-        console.log("File recevied:", req.file);
+        console.log("File recevied:", req.files);
         console.log("Body recevied:", req.body);
 
         const { variantId } = req.body;
 
-        if (!req.file) {
+        if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const image = new Image({
-            productImage : req.file.filename,
-            variantId,
-        })
-        
-        await image.save();
+        const images = [];
 
-        res.json({message: "Product image inserted", data: image});
+       for (const file of req.files) {
+            const img = new Image({
+                productImage: file.filename,
+                variantId,
+            });
+
+            await img.save();
+            images.push(img);
+        }
+
+        res.json({message: "Product image inserted", data: images});
     } catch (err) {
         console.error("Error uploading image:", err);
         res.status(500).send("Server error");
@@ -996,6 +1132,172 @@ app.put("/Image/:id", upload.single("productImage"), async (req, res) => {
 
 
 
+
+
+
+
+
+const stockSchemaStructure = new mongoose.Schema({
+    variantSizeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "variantsizecollection",
+        required: true
+    },
+    stockQuantity: {
+        type: String,
+        required: true
+    },
+    stockDate: {
+        type: Date,
+        default: Date.now
+    },
+    stockDescription: {
+        type: String,
+        required: true
+    }
+});
+
+const Stock = mongoose.model("stockcollection", stockSchemaStructure);
+
+app.post("/Stock", async (req, res) => {
+    try {
+        const { variantSizeId, stockQuantity, stockDescription } = req.body;
+
+        let stock = await Stock.findOne({ variantSizeId });
+
+        if (stock) {
+            // UPDATE existing
+            stock.stockQuantity = stockQuantity;
+            stock.stockDescription = stockDescription;
+            await stock.save();
+
+            return res.json({
+                message: "Stock updated successfully",
+                stock
+            });
+        }
+
+        // INSERT new
+        stock = new Stock({
+            variantSizeId,
+            stockQuantity,
+            stockDescription
+        });
+
+        await stock.save();
+
+        res.json({
+            message: "Stock save successfully",
+            stock
+        });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+app.get("/VariantSize/variant/:variantId/withStock", async (req, res) => {
+    try {
+        const { variantId } = req.params;
+
+        const sizes = await VariantSize.find({ variantId })
+            .populate("sizeId");
+
+        // Get stock for each variantSize
+        const result = [];
+
+        for (const size of sizes) {
+            const stock = await Stock.findOne({ variantSizeId: size._id });
+
+            result.push({
+                ...size._doc,
+                currentStock: stock ? stock.stockQuantity : 0,
+                description: stock ? stock.stockDescription : ""
+            });
+        }
+
+        res.json({ sizes: result });
+
+    } catch (err) {
+        console.error("Error fetching sizes with stock:", err);
+        res.status(500).send("Server error");
+    }
+});
+
+
+
+app.get("/Stock", async (req, res) => {
+    try{
+        const stock = await Stock.find();
+        
+        if(stock.length === 0){
+           return res.json({message: "Stock not found"}); 
+        } else{
+            res.send({stock}).status(200);
+        }
+    } catch(err) {
+         console.error("Error finding stock:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.delete("/Stock/:id", async (req, res) => {
+    try {
+        const stockId = req.params.id;
+        const deleteStock = await Stock.findByIdAndDelete(stockId);
+
+        if (!deleteStock) {
+            return res.json({ message: "Stock not found" });
+        } else {
+            res.json({ message: "Stock deleted successfully", deleteStock });
+        }
+    } catch (err) {
+        console.error("Error deleting Stock:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+
+app.put("/Stock/:id", async (req, res) => {
+    try {
+        const stockId = req.params.id;
+        const { variantSizeId, stockQuantity, stockDescription } = req.body;
+
+        let stock = await Stock.findByIdAndUpdate(
+            stockId,
+            { variantSizeId, stockQuantity, stockDescription },
+            { new: true }
+        );
+
+        if (!stock) {
+            return res.json({ message: "Stock not found" });
+        } else {
+            res.json({ message: "Stock updated successfully" });
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+});
+
+// Populate Stock
+
+app.get("/StockPopulate", async (req, res) => {
+    try{
+        const stock = await Stock.find()
+        .populate("variantId");
+        
+        if(stock.length === 0){
+           return res.json({message: "Stock not found"}); 
+        } else{
+            res.send({stock}).status(200);
+        }
+    } catch(err) {
+         console.error("Error finding stock:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 
 
@@ -2367,124 +2669,6 @@ app.put("/Brand/:id", async (req, res) => {
 
 
 
-const stockSchemaStructure = new mongoose.Schema({
-    variantId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "variantcollection",
-        required: true
-    },
-    stockQuantity: {
-        type: String,
-        required: true
-    },
-    stockDate: {
-        type: Date,
-        default: Date.now
-    },
-    stockDescription: {
-        type: String,
-        required: true
-    }
-});
-
-const Stock = mongoose.model("stockcollection", stockSchemaStructure);
-
-app.post("/Stock", async (req, res) =>{
-    try{
-        const {variantId, stockQuantity, stockDescription} = req.body;
-
-        let stock = await Stock.findOne({variantId});
-
-        if(stock){
-            return res.json({message: "Stock already exists"});
-        }
-    
-        stock = new Stock({
-            variantId,
-            stockQuantity,
-            stockDescription
-        });
-
-        await stock.save();
-
-        res.json({message: "Stock added successfully"});
-    } catch(err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
-});
-
-app.get("/Stock", async (req, res) => {
-    try{
-        const stock = await Stock.find();
-        
-        if(stock.length === 0){
-           return res.json({message: "Stock not found"}); 
-        } else{
-            res.send({stock}).status(200);
-        }
-    } catch(err) {
-         console.error("Error finding stock:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-app.delete("/Stock/:id", async (req, res) => {
-    try {
-        const stockId = req.params.id;
-        const deleteStock = await Stock.findByIdAndDelete(stockId);
-
-        if (!deleteStock) {
-            return res.json({ message: "Stock not found" });
-        } else {
-            res.json({ message: "Stock deleted successfully", deleteStock });
-        }
-    } catch (err) {
-        console.error("Error deleting Stock:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-
-app.put("/Stock/:id", async (req, res) => {
-    try {
-        const stockId = req.params.id;
-        const { variantId, stockQuantity, stockDescription } = req.body;
-
-        let stock = await Stock.findByIdAndUpdate(
-            stockId,
-            { variantId, stockQuantity, stockDescription },
-            { new: true }
-        );
-
-        if (!stock) {
-            return res.json({ message: "Stock not found" });
-        } else {
-            res.json({ message: "Stock updated successfully" });
-        }
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
-});
-
-// Populate Stock
-
-app.get("/StockPopulate", async (req, res) => {
-    try{
-        const stock = await Stock.find()
-        .populate("variantId");
-        
-        if(stock.length === 0){
-           return res.json({message: "Stock not found"}); 
-        } else{
-            res.send({stock}).status(200);
-        }
-    } catch(err) {
-         console.error("Error finding stock:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
 
 
 
@@ -2492,120 +2676,7 @@ app.get("/StockPopulate", async (req, res) => {
 
 
 
-const productColorSchemaStructure = new mongoose.Schema({
-    colorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "colorcollection",
-        required: true
-    },
-    variantId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "variantcollection",
-        required: true
-    }
-});
 
-
-
-
-const ProductColor = mongoose.model("productcolorcollection", productColorSchemaStructure);
-
-app.post("/ProductColor", async (req, res) =>{
-    try{
-        const {colorId, variantId} = req.body;
-
-        let productcolor = await ProductColor.findOne({variantId, colorId});
-
-        if(productcolor){
-            return res.json({message: "Product color already exists"});
-        }
-
-        productcolor = new ProductColor({
-            colorId,
-            variantId
-        });
-
-        await productcolor.save();
-
-        res.json({message: "Product color added successfully"});
-    } catch(err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
-});
-
-app.get("/ProductColor", async (req, res) => {
-    try {
-        const productColors = await ProductColor.find();
-
-        if (productColors.length === 0) {
-            return res.send({ message: "No product colors found", productColors: [] });
-        } else {
-            res.send({ productColors }).status(200);
-        }
-    } catch (err) {
-        console.error("Error finding Product Colors:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-app.delete("/ProductColor/:id", async (req, res) => {
-    try {
-        const productColorId = req.params.id;
-        const deleteProductColor = await ProductColor.findByIdAndDelete(productColorId);
-
-        if (!deleteProductColor) {
-            return res.json({ message: "Product color not found" });
-        } else {
-            res.json({ message: "Product color deleted successfully", deleteProductColor });
-        }
-    } catch (err) {
-        console.error("Error deleting Product Color:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-
-app.put("/ProductColor/:id", async (req, res) => {
-    try {
-        const productColorId = req.params.id;
-        const { colorId, variantId } = req.body;
-
-        let productColor = await ProductColor.findByIdAndUpdate(
-            productColorId,
-            { colorId, variantId },
-            { new: true }
-        );
-
-        if (!productColor) {
-            return res.json({ message: "Product color not found" });
-        } else {
-            res.json({ message: "Product color updated successfully" });
-        }
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server error");
-    }
-});
-
-// Populate ProductColor
-
-app.get("/ProductColorPopulate", async (req, res) => {
-    try {
-        const productColors = await ProductColor.find()
-        .populate("colorId")
-        .populate("variantId");
-
-        if (productColors.length === 0) {
-            return res.send({ message: "No product colors found", productColors: [] });
-        } else {
-            res.send({ productColors }).status(200);
-        }
-    } catch (err) {
-        console.error("Error finding Product Colors:", err);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
 
 const districtSchemaStructure = new mongoose.Schema({
     districtName: {

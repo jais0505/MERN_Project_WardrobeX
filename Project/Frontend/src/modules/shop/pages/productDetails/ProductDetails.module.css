@@ -1,0 +1,374 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Back Button */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 30px;
+}
+
+.backBtn:hover {
+  border-color: #000000;
+  color: #000000;
+}
+
+/* Details Wrapper */
+.detailsWrapper {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 40px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+/* Image Section */
+.imageSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mainImageWrapper {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f3f4f6;
+  border: 2px solid #e5e7eb;
+}
+
+.mainImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stockInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #f9fafb;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+}
+
+.stockLabel {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.stockValue {
+  font-size: 16px;
+  color: #000000;
+  font-weight: 700;
+}
+
+/* Details Section */
+.detailsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.category {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.productTitle {
+  font-size: 36px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.sku {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.priceTag {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 16px 24px;
+  background-color: #000000;
+  border-radius: 10px;
+}
+
+.priceLabel {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.price {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Description Section */
+.descriptionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.description {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Specifications Section */
+.specsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.specsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.specItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.specLabel {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.specValue {
+  font-size: 15px;
+  color: #000000;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.editBtn,
+.addVariantBtn,
+.stockBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.editBtn {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+}
+
+.editBtn:hover {
+  background-color: #1a1a1a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.addVariantBtn {
+  background-color: #ffffff;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+}
+
+.addVariantBtn:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+.stockBtn {
+  background-color: burlywood;
+  color: white;
+  border: 2px solid burlywood;
+}
+
+.stockBtn:hover {
+  background-color: rgb(213, 150, 68);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(211, 213, 71, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .detailsWrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .imageSection {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 20px;
+  }
+
+  .detailsWrapper {
+    padding: 24px;
+  }
+
+  .productTitle {
+    font-size: 28px;
+  }
+
+  .price {
+    font-size: 28px;
+  }
+
+  .specsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .priceTag {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+
+/* Loading Animation */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  font-size: 18px;
+  color: #6b7280;
+  font-weight: 600;
+  position: relative;
+}
+
+/* Spinning circle animation */
+.loading::after {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f4f6;
+  border-top-color: #000000;
+  border-radius: 50%;
+  position: absolute;
+  animation: spin 1s linear infinite;
+  margin-left: 160px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Alternative: Pulsing dots animation */
+.loading.dots::after {
+  content: '...';
+  display: inline-block;
+  width: 30px;
+  text-align: left;
+  animation: dots 1.5s steps(4, end) infinite;
+  margin-left: 4px;
+  border: none;
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: '.';
+  }
+  40% {
+    content: '..';
+  }
+  60%, 100% {
+    content: '...';
+  }
+}

@@ -1,7 +1,8 @@
 import AnnouncementBar from '../../components/announcementBar/AnnouncementBar'
 import Footer from '../../components/footer/Footer'
-import Hero from '../../components/hero/hero'
+import Hero from '../../components/hero/Hero'
 import Navbar from '../../components/navbar/Navbar'
+import Product from '../../components/products/Product'
 import styles from './GuestHome.module.css'
 const GuestHome = () => {
   return (
@@ -9,6 +10,7 @@ const GuestHome = () => {
       <AnnouncementBar />
       <Navbar />
       <Hero />
+      <Product />
       <Footer />
     </div>
   )

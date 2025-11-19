@@ -1,0 +1,92 @@
+.container {
+  width: 90%;
+  margin: auto;
+  padding: 20px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 30px;
+}
+
+.backBtn:hover {
+  border-color: #000000;
+  color: #000000;
+}
+.title {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+  transition: 0.2s ease;
+  gap: 5px;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.colorBox {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  margin-right: 12px;
+}
+
+.info {
+  flex: 1;
+}
+
+.colorName {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.index {
+  font-size: 13px;
+  color: gray;
+}
+
+.manageBtn {
+  padding: 8px 12px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.manageBtn:hover {
+  background: #0056b3;
+}

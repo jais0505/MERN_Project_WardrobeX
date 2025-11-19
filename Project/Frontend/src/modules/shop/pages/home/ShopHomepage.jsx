@@ -6,6 +6,8 @@ const ShopHomepage = () => {
     <div>
       <h1>Shop HomePage</h1>
       <Link to="/shop/product">Add Product</Link>
+      <br />
+      <Link to="/shop/viewproducts">View Product</Link>
     </div>
   )
 }
