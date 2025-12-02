@@ -5,8 +5,8 @@ import { useNavigate, useParams } from 'react-router'
 import axios from 'axios'
 
 const AddSizeAndImage = () => {
-  const navigate = useNavigate()
-  const { id } = useParams()
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [variant, setVariant] = useState(null);
   const [availableSizes, setAvailableSizes] = useState([]);
 

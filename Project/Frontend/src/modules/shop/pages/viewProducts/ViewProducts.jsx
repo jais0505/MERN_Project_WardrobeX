@@ -9,10 +9,12 @@ const ViewProducts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [ products, setProducts] =useState([]);
   const navigate = useNavigate();
+  const shopId = sessionStorage.getItem('sid');
+  console.log("ShopId:", shopId);
 
   const fetchProducts = async () => {
     try{
-        const res = await axios.get("http://localhost:5000/Product");
+        const res = await axios.get(`http://localhost:5000/Product/Shop/${shopId}`);
         if(res.data.products){
           setProducts(res.data.products);
           console.log("Products:", res.data.products);
@@ -29,7 +31,7 @@ const ViewProducts = () => {
 
   const filteredProducts = products.filter(products =>
     products.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    products.subcategoryId.toLowerCase().includes(searchQuery.toLowerCase())
+    products.subcategoryId?.subcategoryName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -70,7 +72,7 @@ const ViewProducts = () => {
               </div>
 
               <div className={styles.productContent}>
-                <span className={styles.category}>{product.subcategoryId}</span>
+                <span className={styles.category}>{product.subcategoryId?.subcategoryName}</span>
                 <h3 className={styles.productName}>{product.productName}</h3>
                 <p className={styles.productDescription}>
                   {product.productDescription.length > 100
