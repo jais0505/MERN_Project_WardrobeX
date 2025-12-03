@@ -1,0 +1,404 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 40px;
+  min-height: 100vh;
+  /* background-color: #f9fafb; */
+}
+
+.profileCard {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+}
+
+.headerButtons {
+  display: flex;
+  gap: 12px;
+}
+
+/* Buttons */
+.editBtn,
+.changePswBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.editBtn {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+}
+
+.editBtn:hover {
+  background-color: #1a1a1a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.changePswBtn {
+  background-color: #ffffff;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.changePswBtn svg {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.changePswBtn:hover {
+  border-color: #000000;
+  color: #000000;
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.changePswBtn:hover svg {
+  transform: rotate(15deg);
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.saveBtn,
+.cancelBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.saveBtn {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+}
+
+.saveBtn:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.cancelBtn {
+  background-color: #ffffff;
+  color: #ef4444;
+  border: 2px solid #ef4444;
+}
+
+.cancelBtn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+/* Content Layout */
+.content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+}
+
+/* Image Section */
+.imageSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 3px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.shopImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageUploadBtn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  background-color: #000000;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 20px;
+}
+
+.imageUploadBtn:hover {
+  background-color: #1a1a1a;
+  transform: scale(1.1);
+}
+
+.fileInput {
+  display: none;
+}
+
+/* Details Section */
+.detailsSection {
+  flex: 1;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailIcon {
+  font-size: 20px;
+  color: #6b7280;
+}
+
+.detailValue {
+  font-size: 16px;
+  color: #000000;
+  margin: 0;
+  padding: 14px 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  line-height: 1.5;
+}
+
+/* Input Fields */
+.input,
+.textarea {
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 40px 20px;
+  }
+
+  .profileCard {
+    padding: 24px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .headerButtons {
+    flex-direction: column;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .imageWrapper {
+    width: 200px;
+    height: 200px;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    width: 100%;
+  }
+
+  .saveBtn,
+  .cancelBtn {
+    flex: 1;
+  }
+}
+
+
+
+/* Unique Change Password Container */
+.pwd_container {
+  width: 100%;
+  max-width: 520px;
+  margin: 40px auto;
+  padding: 28px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+  animation: pwd_fadeIn 0.3s ease;
+}
+
+.pwd_title {
+  text-align: center;
+  font-size: 26px;
+  color: #222;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+/* Labels */
+.pwd_label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Inputs */
+.pwd_input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  background: #fafafa;
+  transition: 0.2s;
+}
+
+.pwd_input:focus {
+  border-color: #4a90e2;
+  background: #ffffff;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.4);
+}
+
+/* Buttons wrapper */
+.pwd_btn_group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+/* Save Button */
+.pwd_save_btn {
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+
+.pwd_save_btn:hover {
+  background: #27ae60;
+}
+
+/* Cancel Button */
+.pwd_cancel_btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+
+.pwd_cancel_btn:hover {
+  background: #c0392b;
+}
+
+/* Fade Animation */
+@keyframes pwd_fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

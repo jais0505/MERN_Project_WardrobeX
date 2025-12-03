@@ -1,15 +1,18 @@
-import React from 'react'
-import { Link } from 'react-router'
+import styles from "./ShopHomepage.module.css";
+import Navbar from "../../components/navbar/Navbar";
+import ShopRoutes from "../../../../routes/ShopRoutes";
+import ShopHeroBanner from "../../components/shopherobanner/ShopHeroBanner";
 
 const ShopHomepage = () => {
   return (
     <div>
-      <h1>Shop HomePage</h1>
-      <Link to="/shop/product">Add Product</Link>
-      <br />
-      <Link to="/shop/viewproducts">View Product</Link>
+      <Navbar />
+      <div className={styles.home_content}>
+        <ShopRoutes />
+        <ShopHeroBanner />
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ShopHomepage
+export default ShopHomepage;

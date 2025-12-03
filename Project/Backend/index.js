@@ -412,8 +412,66 @@ app.put(
   }
 );
 
-// Shop Verification
+//Shop editing
+app.put("/ShopEditing/:id", upload.fields([{ name: "shopImage", maxCount: 1 }]), async (req, res) => {
+  try {
+    const { shopName, shopContact, shopAddress, shopLocation } = req.body;
 
+    let updateData = {
+      shopName,
+      shopContact,
+      shopAddress,
+      shopLocation
+    };
+
+    // Only update image if uploaded
+    if (req.files.shopImage) {
+      updateData.shopImage = `http://127.0.0.1:5000/images/${req.files.shopImage[0].filename}`;
+    }
+
+    const updatedShop = await Shop.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    });
+
+    res.json({ message: "Shop updated", shop: updatedShop });
+  } catch (err) {
+    console.error("Error updating shop:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Change Shop Password
+app.put("/ShopChangePassword/:id", async (req, res) => {
+  try {
+    const shopId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+
+    // Validate fields
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const shop = await Shop.findById(shopId);
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+    // Check old password
+    if (shop.shopPassword !== oldPassword) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // Update password
+    shop.shopPassword = newPassword;
+    await shop.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Error changing password:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+// Shop Verification
 app.put(`/ShopVerification/:id`, async (req, res) => {
   try {
     const shopId = req.params.id;
@@ -1530,8 +1588,6 @@ app.post("/Order", async (req, res) => {
 app.get("/Order/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-
-    console.log("Requested UserID:", userId);
 
     const order = await Order.findOne({ userId, orderStatus: "inCart"});
 
@@ -3164,6 +3220,7 @@ app.post("/Login", async (req, res) => {
     return res.send({
       role: "admin",
       id: admin._id,
+      name: admin.adminName,
       message: "Login successful",
     });
   } else if (shop) {
@@ -3171,6 +3228,7 @@ app.post("/Login", async (req, res) => {
       return res.send({
         role: "shop",
         id: shop._id,
+        name: shop.shopName,
         message: "Login successful",
       });
     } else if (shop.shopStatus === "rejected") {
