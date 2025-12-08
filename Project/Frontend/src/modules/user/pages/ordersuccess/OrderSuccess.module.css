@@ -1,0 +1,247 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.successCard {
+  max-width: 600px;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success Icon */
+.iconWrapper {
+  margin-bottom: 24px;
+  animation: scaleIn 0.5s ease-out 0.2s both;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 60px;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 10px 40px rgba(16, 185, 129, 0.5);
+  }
+}
+
+/* Title and Message */
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 12px 0;
+  animation: fadeIn 0.6s ease-out 0.3s both;
+}
+
+.message {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 32px 0;
+  animation: fadeIn 0.6s ease-out 0.4s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Order Details */
+.detailsSection {
+  background-color: #f9fafb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 2px solid #e5e7eb;
+  animation: fadeIn 0.6s ease-out 0.5s both;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailValue {
+  font-size: 16px;
+  color: #000000;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.6s ease-out 0.6s both;
+}
+
+.viewOrderBtn,
+.homeBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.viewOrderBtn {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+}
+
+.viewOrderBtn:hover {
+  background-color: #1a1a1a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.homeBtn {
+  background-color: #ffffff;
+  color: #000000;
+  border: 2px solid #e5e7eb;
+}
+
+.homeBtn:hover {
+  border-color: #000000;
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+}
+
+/* Info Box */
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: #eff6ff;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  animation: fadeIn 0.6s ease-out 0.7s both;
+}
+
+.infoIcon {
+  font-size: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.infoText {
+  font-size: 13px;
+  color: #1e40af;
+  line-height: 1.6;
+  text-align: left;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .successCard {
+    padding: 32px 24px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+
+  .message {
+    font-size: 15px;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .detailsSection {
+    padding: 20px;
+  }
+
+  .detailLabel,
+  .detailValue {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .successIcon {
+    width: 80px;
+    height: 80px;
+    font-size: 48px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}

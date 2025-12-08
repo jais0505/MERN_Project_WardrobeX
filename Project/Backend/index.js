@@ -3,7 +3,16 @@ const mongoose = require("mongoose");
 const app = express();
 const cors = require("cors");
 const mailer = require("nodemailer");
-const bcrypt = require("bcrypt");
+
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+
+require("dotenv").config();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // const bodyParser = require("body-parser");
 const port = 5000;
@@ -69,7 +78,6 @@ app.get("/Test", (req, res) => {
   console.log(req.body);
   res.send({ message: "Hi" });
 });
-
 
 const adminSchemaStructure = new mongoose.Schema({
   adminName: {
@@ -413,32 +421,40 @@ app.put(
 );
 
 //Shop editing
-app.put("/ShopEditing/:id", upload.fields([{ name: "shopImage", maxCount: 1 }]), async (req, res) => {
-  try {
-    const { shopName, shopContact, shopAddress, shopLocation } = req.body;
+app.put(
+  "/ShopEditing/:id",
+  upload.fields([{ name: "shopImage", maxCount: 1 }]),
+  async (req, res) => {
+    try {
+      const { shopName, shopContact, shopAddress, shopLocation } = req.body;
 
-    let updateData = {
-      shopName,
-      shopContact,
-      shopAddress,
-      shopLocation
-    };
+      let updateData = {
+        shopName,
+        shopContact,
+        shopAddress,
+        shopLocation,
+      };
 
-    // Only update image if uploaded
-    if (req.files.shopImage) {
-      updateData.shopImage = `http://127.0.0.1:5000/images/${req.files.shopImage[0].filename}`;
+      // Only update image if uploaded
+      if (req.files.shopImage) {
+        updateData.shopImage = `http://127.0.0.1:5000/images/${req.files.shopImage[0].filename}`;
+      }
+
+      const updatedShop = await Shop.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        {
+          new: true,
+        }
+      );
+
+      res.json({ message: "Shop updated", shop: updatedShop });
+    } catch (err) {
+      console.error("Error updating shop:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
-
-    const updatedShop = await Shop.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    });
-
-    res.json({ message: "Shop updated", shop: updatedShop });
-  } catch (err) {
-    console.error("Error updating shop:", err);
-    res.status(500).json({ message: "Internal server error" });
   }
-});
+);
 
 // Change Shop Password
 app.put("/ShopChangePassword/:id", async (req, res) => {
@@ -469,7 +485,6 @@ app.put("/ShopChangePassword/:id", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 // Shop Verification
 app.put(`/ShopVerification/:id`, async (req, res) => {
@@ -1539,8 +1554,8 @@ const orderSchemaStruture = new mongoose.Schema({
     required: true,
   },
   totalAmount: {
-    type: String,
-    // required: true,
+    type: Number,
+    default: 0,
   },
   orderDate: {
     type: Date,
@@ -1549,12 +1564,21 @@ const orderSchemaStruture = new mongoose.Schema({
   },
   orderStatus: {
     type: String,
-    enum: ["inCart", "paymentPending", "paymentSuccess","processing", "shipped", "delivered", "cancelled", "returned"],
+    enum: [
+      "inCart",
+      "paymentPending",
+      "paymentSuccess",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+      "returned",
+    ],
     default: "inCart",
   },
-  transactionId: {
+  razorpayPaymentId: {
     type: String,
-    // required: true,
+    default: null
   },
 });
 
@@ -1562,9 +1586,9 @@ const Order = mongoose.model("ordercollection", orderSchemaStruture);
 
 app.post("/Order", async (req, res) => {
   try {
-    const { userId, totalAmount, transactionId } = req.body;
+    const { userId, totalAmount } = req.body;
 
-    let order = await Order.findOne({ transactionId });
+    let order = await Order.findOne({ userId });
 
     if (order) {
       return res.json({ message: "Order already exists" });
@@ -1573,7 +1597,6 @@ app.post("/Order", async (req, res) => {
     order = new Order({
       userId,
       totalAmount,
-      transactionId,
     });
 
     await order.save();
@@ -1589,22 +1612,18 @@ app.get("/Order/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const order = await Order.findOne({ userId, orderStatus: "inCart"});
+    const order = await Order.findOne({ userId, orderStatus: "inCart" });
 
     if (!order) {
       return res.status(200).json({ message: "No order found", order: null });
     }
 
     return res.status(200).json({ order });
-
   } catch (err) {
     console.error("Error Finding Order:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-
-
 
 app.delete("/Order/:id", async (req, res) => {
   try {
@@ -1625,11 +1644,11 @@ app.delete("/Order/:id", async (req, res) => {
 app.put("/Order/:id", async (req, res) => {
   try {
     const orderId = req.params.id;
-    const { userId, totalAmount, transactionId } = req.body;
+    const { userId, totalAmount } = req.body;
 
     const order = await Order.findByIdAndUpdate(
       orderId,
-      { userId, totalAmount, transactionId },
+      { userId, totalAmount },
       { new: true }
     );
 
@@ -1675,6 +1694,11 @@ const orderItemSchemaStructure = new mongoose.Schema({
     type: String,
     required: true,
   },
+  quantity: {
+    type: Number,
+    default: 1,
+    min: 1,
+  },
   orderItemStatus: {
     type: String,
     enum: ["processing", "shipped", "delivered", "cancelled", "returned"],
@@ -1691,8 +1715,15 @@ app.post("/OrderItem", async (req, res) => {
   try {
     const { userId, variantSizeId, orderItemPrice } = req.body;
 
-    if (!userId || !variantSizeId || (orderItemPrice === undefined || orderItemPrice === null)) {
-      return res.status(400).json({ action: "error", message: "Missing required fields" });
+    if (
+      !userId ||
+      !variantSizeId ||
+      orderItemPrice === undefined ||
+      orderItemPrice === null
+    ) {
+      return res
+        .status(400)
+        .json({ action: "error", message: "Missing required fields" });
     }
 
     let order = await Order.findOne({ userId, orderStatus: "inCart" });
@@ -1701,24 +1732,28 @@ app.post("/OrderItem", async (req, res) => {
       order = new Order({
         userId,
         orderStatus: "inCart",
-        orderDate: new Date()
+        orderDate: new Date(),
       });
       await order.save();
     }
 
     const existing = await OrderItem.findOne({
       orderId: order._id,
-      variantSizeId: variantSizeId
+      variantSizeId: variantSizeId,
     });
 
     if (existing) {
-      return res.json({ action: "info", message: "Item already in cart", orderId: order._id });
+      return res.json({
+        action: "info",
+        message: "Item already in cart",
+        orderId: order._id,
+      });
     }
 
-     const orderitem = new OrderItem({
+    const orderitem = new OrderItem({
       orderId: order._id,
       variantSizeId,
-      orderItemPrice
+      orderItemPrice,
     });
 
     await orderitem.save();
@@ -1727,9 +1762,8 @@ app.post("/OrderItem", async (req, res) => {
       action: "success",
       message: "Item added to cart",
       orderId: order._id,
-      orderitem
+      orderitem,
     });
-
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -1740,26 +1774,27 @@ app.get("/OrderItem/:orderId", async (req, res) => {
   try {
     const orderId = req.params.orderId;
 
-    const item = await OrderItem.find({orderId}).populate({
+    const item = await OrderItem.find({ orderId })
+      .populate({
         path: "variantSizeId",
         populate: [
           {
             path: "variantId",
             populate: {
               path: "productId",
-              populate: ["subcategoryId", "brandId"]
-            }
+              populate: ["subcategoryId", "brandId"],
+            },
           },
           {
-            path: "sizeId"
-          }
-        ]
+            path: "sizeId",
+          },
+        ],
       })
       .populate({
         path: "variantSizeId.variantId",
         populate: {
-          path: "colorId"
-        }
+          path: "colorId",
+        },
       });
     if (item.length === 0) {
       return res.send({ message: "Order item not found", item: [] });
@@ -1827,6 +1862,29 @@ app.get("/OrderItemPopulate", async (req, res) => {
   } catch (err) {
     console.error("Error finding Order item:", err);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//Item Quantity Update
+app.patch("/UpdateQty/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { quantity } = req.body;
+
+    if (quantity < 1) {
+      return res.status(400).json({ message: "Quantity must be at least 1" });
+    }
+
+    const updateItem = await OrderItem.findByIdAndUpdate(
+      id,
+      { quantity },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Quantity updated", item: updateItem });
+  } catch (err) {
+    console.error("Error Updating quantity:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -3269,5 +3327,59 @@ app.put("/ChangePassword/:id", async (req, res) => {
   } catch (err) {
     console.error("Error changing paassword", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+//CREATE PAYMENT ORDER
+app.post("/create-order", async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    const options = {
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `receipt_order_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    return res.status(200).json(order);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+});
+
+app.post("/verify-payment", async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderId,
+    } = req.body;
+
+    console.log("Received orderId:", orderId);
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      await Order.findByIdAndUpdate(orderId, {
+        orderStatus: "paymentSuccess",
+        razorpayPaymentId: razorpay_payment_id,
+      });
+
+      return res.status(200).json({ message: "Payment verified" });
+    } else {
+      return res.status(400).json({ message: "Invalid signature" });
+    }
+  } catch (err) {
+    console.error("Payment verificatio  error", err);
+    res.status(500).json({ message: "Something went wrong" });
   }
 });

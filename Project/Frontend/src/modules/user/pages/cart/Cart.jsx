@@ -8,7 +8,6 @@ import { toast } from "react-toastify";
 const Cart = () => {
   const navigate = useNavigate();
   const userId = sessionStorage.getItem("uid");
-  console.log("UserId:", userId);
   const [order, setOrder] = useState("");
   const [cartItems, setCartItems] = useState([]);
 
@@ -16,7 +15,7 @@ const Cart = () => {
     try {
       const res = await axios.get(`http://localhost:5000/Order/${userId}`);
       if (res.data.order) {
-        console.log(res.data.order);
+        // console.log(res.data.order);
         setOrder(res.data.order);
       } else {
         console.log("User has no items");
@@ -33,30 +32,35 @@ const Cart = () => {
         const formatted = res.data.item.map((item) => ({
           _id: item._id,
           productName: item.variantSizeId.variantId.productId.productName,
-          productPrice: item.orderItemPrice,
+          productPrice: Number(item.orderItemPrice),
           productImage: item.variantSizeId.variantId.productId.productImage,
           subcategoryId: item.variantSizeId.variantId.productId.subcategoryId,
           brandName: item.variantSizeId.variantId.productId.brandId.brandName,
           colorName: item.variantSizeId.variantId.colorId.colorName,
           sizeName: item.variantSizeId.sizeId.sizeName,
-          quantity: 1,
+          quantity: item.quantity,
           inStock: true,
         }));
         setCartItems(formatted);
-        console.log("Formatted Items:", formatted);
+        // console.log("Formatted Items:", formatted);
       }
     } catch (err) {
       console.error("Error fetching order items:", err);
     }
   };
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCartItems(
-      cartItems.map((item) =>
-        item._id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+  const updateQty = async (id, newQty) => {
+    try {
+      const res = await axios.patch(`http://localhost:5000/UpdateQty/${id}`, {
+        quantity: newQty,
+      });
+
+      if (res) {
+        fetchOrderItems(order._id);
+      }
+    } catch (error) {
+      console.log("Error updating quantity", error);
+    }
   };
 
   const removeCartItemById = async (id) => {
@@ -71,14 +75,14 @@ const Cart = () => {
 
   const calculateSubtotal = () => {
     return cartItems.reduce(
-      (sum, item) => sum + item.productPrice * item.quantity,
+      (sum, item) => sum + Number(item.productPrice) * item.quantity,
       0
     );
   };
 
   const calculatePlatformFee = () => {
     return cartItems.reduce((sum, item) => {
-      const itemTotal = item.productPrice * item.quantity;
+      const itemTotal = Number(item.productPrice) * item.quantity;
       const fee = itemTotal * 0.02;
       return sum + fee;
     }, 0);
@@ -96,6 +100,67 @@ const Cart = () => {
 
     return subtotal + platformFee + deliveryFee;
   };
+
+  const handleRazorpayPayment = async () => {
+    const totalAmount = calculateTotal(); // your existing function
+
+    // 1️⃣ Create order on backend
+    const res = await axios.post("http://localhost:5000/create-order", {
+      amount: totalAmount
+    });
+
+    const order = await res.data;
+ 
+    // 2️⃣ Open Razorpay UI
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount * 100,
+      currency: "INR",
+      name: "Shop Name",
+      description: "Order Payment",
+      order_id: order.id,
+
+      handler: function (response) {
+        verifyPayment(response); // move to verification step
+      },
+
+      prefill: {
+        name: "User",
+        email: "user@gmail.com",
+        contact: "9999999999",
+      },
+      theme: { color: "#3399cc" },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  const verifyPayment = async (resData) => {
+    const verify = await fetch("http://localhost:5000/verify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...resData,
+        orderId: order._id
+      }),
+    });
+
+    const data = await verify.json();
+
+    if (data.message === "Payment verified") {
+      alert("Payment successful!");
+
+      // place order here
+      placeOrder();
+    } else {
+      alert("Payment failed");
+    }
+  };
+
+  const placeOrder = () => {
+  navigate("/user/order-success");
+};
 
   useEffect(() => {
     fetchOrder();
@@ -178,7 +243,7 @@ const Cart = () => {
                           <button
                             className={styles.qtyBtn}
                             onClick={() =>
-                              updateQuantity(item._id, item.quantity - 1)
+                              updateQty(item._id, item.quantity - 1)
                             }
                             disabled={item.quantity <= 1}
                           >
@@ -190,8 +255,9 @@ const Cart = () => {
                           <button
                             className={styles.qtyBtn}
                             onClick={() =>
-                              updateQuantity(item._id, item.quantity + 1)
+                              updateQty(item._id, item.quantity + 1)
                             }
+                            disabled={item.quantity > 10}
                           >
                             <MdAdd />
                           </button>
@@ -204,7 +270,7 @@ const Cart = () => {
                       <div className={styles.itemTotal}>
                         <span className={styles.totalLabel}>Total:</span>
                         <span className={styles.totalPrice}>
-                          ${(item.productPrice * item.quantity).toFixed(2)}
+                          ₹{(item.productPrice * item.quantity).toFixed(2)}
                         </span>
                       </div>
 
@@ -254,7 +320,7 @@ const Cart = () => {
               </div>
 
               {/* Checkout Button */}
-              <button className={styles.checkoutBtn}>
+              <button className={styles.checkoutBtn} onClick={handleRazorpayPayment}>
                 Proceed to Checkout
               </button>
 

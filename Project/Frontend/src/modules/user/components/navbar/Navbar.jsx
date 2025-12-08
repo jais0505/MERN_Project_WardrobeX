@@ -37,9 +37,13 @@ const Navbar = () => {
           <Link to="/user/home" className={styles.link}>HOME</Link>
           {menu === "home" ? <hr /> : <></>}
         </li>
-        <li onClick={() => handleMenuClick("about")}>
+        <li onClick={() => handleMenuClick("viewproducts")}>
           <Link to="/user/viewproducts" className={styles.link}>PRODUCTS</Link>
-          {menu === "about" ? <hr /> : <></>}
+          {menu === "viewproducts" ? <hr /> : <></>}
+        </li>
+        <li onClick={() => handleMenuClick("myorders")}>
+          <Link to="/user/myorders" className={styles.link}>MY ORDERS</Link>
+          {menu === "myorders" ? <hr /> : <></>}
         </li>
       </ul>
 
