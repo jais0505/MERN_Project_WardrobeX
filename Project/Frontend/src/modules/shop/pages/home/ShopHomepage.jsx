@@ -2,6 +2,7 @@ import styles from "./ShopHomepage.module.css";
 import Navbar from "../../components/navbar/Navbar";
 import ShopRoutes from "../../../../routes/ShopRoutes";
 import ShopHeroBanner from "../../components/shopherobanner/ShopHeroBanner";
+import Footer from "../../../user/components/footer/Footer";
 
 const ShopHomepage = () => {
   return (
@@ -11,6 +12,7 @@ const ShopHomepage = () => {
         <ShopRoutes />
         <ShopHeroBanner />
       </div>
+      <Footer />
     </div>
   );
 };

@@ -15,8 +15,8 @@ const UserHomePage = () => {
         <div className={styles.home_content}>
           <UserRoutes />
           { isHome && <HeroBanner />}
-          <Footer />
         </div>
+        <Footer />
       </div>
   )
 }

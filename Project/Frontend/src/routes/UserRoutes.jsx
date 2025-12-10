@@ -8,6 +8,8 @@ import ProfileSettings from '../modules/user/pages/profilesettings/ProfileSettin
 import Cart from '../modules/user/pages/cart/Cart'
 import OrderSuccess from '../modules/user/pages/ordersuccess/OrderSuccess'
 import MyOrders from '../modules/user/pages/myorders/MyOrders'
+import CheckOut from '../modules/user/pages/checkout/CheckOut'
+import OrderDetails from '../modules/user/pages/orderdetails/OrderDetails'
 
 const UserRoutes = () => {
   return (
@@ -20,6 +22,8 @@ const UserRoutes = () => {
         <Route path="/profilesettings" element={<ProfileSettings />} />
         <Route path="/order-success" element={<OrderSuccess />}/>
         <Route path="/myorders" element={<MyOrders />}/>
+        <Route path="/order-details" element={<OrderDetails />}/>
+        <Route path="/checkout" element={<CheckOut />}/>
     </Routes> 
   )
 }

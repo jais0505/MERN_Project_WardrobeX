@@ -96,13 +96,13 @@ const OrderSuccess = () => {
         <div className={styles.actionButtons}>
           <button 
             className={styles.viewOrderBtn}
-            onClick={() => navigate(`/orders/${orderDetails.orderId}`)}
+            onClick={() => navigate(`/user/myorders`)}
           >
             <MdShoppingBag /> View Order
           </button>
           <button 
             className={styles.homeBtn}
-            onClick={() => navigate('/user/')}
+            onClick={() => navigate('/user/home')}
           >
             <MdHome /> Go to Home
           </button>

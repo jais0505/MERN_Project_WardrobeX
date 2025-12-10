@@ -106,11 +106,11 @@ const Cart = () => {
 
     // 1️⃣ Create order on backend
     const res = await axios.post("http://localhost:5000/create-order", {
-      amount: totalAmount
+      amount: totalAmount,
     });
 
     const order = await res.data;
- 
+
     // 2️⃣ Open Razorpay UI
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -142,14 +142,14 @@ const Cart = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...resData,
-        orderId: order._id
+        orderId: order._id,
       }),
     });
 
     const data = await verify.json();
 
     if (data.message === "Payment verified") {
-      alert("Payment successful!");
+      toast.success("Payment successful!");
 
       // place order here
       placeOrder();
@@ -159,8 +159,8 @@ const Cart = () => {
   };
 
   const placeOrder = () => {
-  navigate("/user/order-success");
-};
+    navigate("/user/order-success");
+  };
 
   useEffect(() => {
     fetchOrder();
@@ -320,7 +320,10 @@ const Cart = () => {
               </div>
 
               {/* Checkout Button */}
-              <button className={styles.checkoutBtn} onClick={handleRazorpayPayment}>
+              <button
+                className={styles.checkoutBtn}
+                onClick={handleRazorpayPayment}
+              >
                 Proceed to Checkout
               </button>
 

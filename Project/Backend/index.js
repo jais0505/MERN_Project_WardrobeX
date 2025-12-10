@@ -694,6 +694,22 @@ app.get("/User/:id", async (req, res) => {
   }
 });
 
+app.get("/UserAddress/:id", async (req, res) => {
+  try{
+    const userId = req.params.id;
+    const address = await User.findById(userId).select("userAddress");
+
+    if(!address) {
+      return res.status(404).json({massage: "User not found"});
+    }
+
+    res.status(200).json(address.userAddress);
+  } catch (err){
+    console.error("Error fetching user address:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+})
+
 app.delete("/User/:id", async (req, res) => {
   try {
     const userId = req.params.id;
@@ -732,6 +748,11 @@ app.put("/User/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+
+
+
+
 
 const productSchemaStructure = new mongoose.Schema({
   shopId: {
@@ -1381,7 +1402,7 @@ const stockSchemaStructure = new mongoose.Schema({
     required: true,
   },
   stockQuantity: {
-    type: String,
+    type: Number,
     required: true,
   },
   stockDate: {
@@ -1566,6 +1587,7 @@ const orderSchemaStruture = new mongoose.Schema({
     type: String,
     enum: [
       "inCart",
+      "buyNow",
       "paymentPending",
       "paymentSuccess",
       "processing",
@@ -1578,7 +1600,7 @@ const orderSchemaStruture = new mongoose.Schema({
   },
   razorpayPaymentId: {
     type: String,
-    default: null
+    default: null,
   },
 });
 
@@ -1679,6 +1701,14 @@ app.get("/OrderPopulate", async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -1767,6 +1797,42 @@ app.post("/OrderItem", async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
+  }
+});
+
+app.post("/buyNowOrder", async (req, res) => {
+  try {
+    const { userId, product } = req.body;
+
+    if (!userId || !product) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const order = new Order({
+      userId,
+      totalAmount: product.price * product.quantity,
+      orderStatus: "buyNow",
+    });
+
+    await order.save();
+
+    const orderItem = new OrderItem({
+      orderId: order._id,
+      variantSizeId: product.variantSizeId,
+      orderItemPrice: product.price,
+      quantity: product.quantity,
+    });
+
+    await orderItem.save();
+
+    res.status(200).json({
+      message: "Buy Now order created",
+      orderId: order._id,
+      product,
+    });
+  } catch (err) {
+    console.error("Error creating Buy Now order:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -3373,6 +3439,14 @@ app.post("/verify-payment", async (req, res) => {
         orderStatus: "paymentSuccess",
         razorpayPaymentId: razorpay_payment_id,
       });
+
+      const orderItems = await OrderItem.find({ orderId });
+      for (let item of orderItems) {
+        await Stock.findOneAndUpdate(
+          { variantSizeId: item.variantSizeId },
+          { $inc: { stockQuantity: -item.quantity } }
+        );
+      }
 
       return res.status(200).json({ message: "Payment verified" });
     } else {

@@ -215,7 +215,7 @@ const MyOrders = () => {
 
               <button 
                 className={styles.viewDetailsBtn}
-                onClick={() => navigate(`/orders/${order.orderId}`)}
+                onClick={() => navigate(`/user/order-details`)}
               >
                 View Details <MdChevronRight />
               </button>
