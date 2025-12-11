@@ -36,13 +36,13 @@ const Cart = () => {
           productImage: item.variantSizeId.variantId.productId.productImage,
           subcategoryId: item.variantSizeId.variantId.productId.subcategoryId,
           brandName: item.variantSizeId.variantId.productId.brandId.brandName,
-          colorName: item.variantSizeId.variantId.colorId.colorName,
+          colorName: item.variantSizeId.variantId.colorId?.colorName,
           sizeName: item.variantSizeId.sizeId.sizeName,
           quantity: item.quantity,
           inStock: true,
         }));
         setCartItems(formatted);
-        // console.log("Formatted Items:", formatted);
+        console.log("Formatted Items:", formatted);
       }
     } catch (err) {
       console.error("Error fetching order items:", err);
@@ -99,67 +99,6 @@ const Cart = () => {
     const deliveryFee = calculateDeliveryFee();
 
     return subtotal + platformFee + deliveryFee;
-  };
-
-  const handleRazorpayPayment = async () => {
-    const totalAmount = calculateTotal(); // your existing function
-
-    // 1️⃣ Create order on backend
-    const res = await axios.post("http://localhost:5000/create-order", {
-      amount: totalAmount,
-    });
-
-    const order = await res.data;
-
-    // 2️⃣ Open Razorpay UI
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: order.amount * 100,
-      currency: "INR",
-      name: "Shop Name",
-      description: "Order Payment",
-      order_id: order.id,
-
-      handler: function (response) {
-        verifyPayment(response); // move to verification step
-      },
-
-      prefill: {
-        name: "User",
-        email: "user@gmail.com",
-        contact: "9999999999",
-      },
-      theme: { color: "#3399cc" },
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-  };
-
-  const verifyPayment = async (resData) => {
-    const verify = await fetch("http://localhost:5000/verify-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...resData,
-        orderId: order._id,
-      }),
-    });
-
-    const data = await verify.json();
-
-    if (data.message === "Payment verified") {
-      toast.success("Payment successful!");
-
-      // place order here
-      placeOrder();
-    } else {
-      alert("Payment failed");
-    }
-  };
-
-  const placeOrder = () => {
-    navigate("/user/order-success");
   };
 
   useEffect(() => {
@@ -322,7 +261,21 @@ const Cart = () => {
               {/* Checkout Button */}
               <button
                 className={styles.checkoutBtn}
-                onClick={handleRazorpayPayment}
+                onClick={() =>
+                  navigate("/user/checkout", {
+                    state: {
+                      isCart: true,
+                      cartItems: cartItems, // your cart items array
+                      cartTotals: {
+                        subtotal: calculateSubtotal(),
+                        platformFee: calculatePlatformFee(),
+                        shippingFee: calculateDeliveryFee(),
+                        total: calculateTotal(),
+                      },
+                      orderId: order._id, // current order id
+                    },
+                  })
+                }
               >
                 Proceed to Checkout
               </button>

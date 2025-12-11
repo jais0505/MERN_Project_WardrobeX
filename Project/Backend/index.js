@@ -695,20 +695,26 @@ app.get("/User/:id", async (req, res) => {
 });
 
 app.get("/UserAddress/:id", async (req, res) => {
-  try{
+  try {
     const userId = req.params.id;
-    const address = await User.findById(userId).select("userAddress");
+    const user = await User.findById(userId).select(
+      "userName userContact userAddress"
+    );
 
-    if(!address) {
-      return res.status(404).json({massage: "User not found"});
+    if (!user) {
+      return res.status(404).json({ massage: "User not found" });
     }
 
-    res.status(200).json(address.userAddress);
-  } catch (err){
+    res.status(200).json({
+      userName: user.userName,
+      contactNo: user.userContact,
+      userAddress: user.userAddress,
+    });
+  } catch (err) {
     console.error("Error fetching user address:", error);
     res.status(500).json({ message: "Server error" });
   }
-})
+});
 
 app.delete("/User/:id", async (req, res) => {
   try {
@@ -748,11 +754,6 @@ app.put("/User/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
-
-
-
-
 
 const productSchemaStructure = new mongoose.Schema({
   shopId: {
@@ -1574,6 +1575,15 @@ const orderSchemaStruture = new mongoose.Schema({
     ref: "usercollection",
     required: true,
   },
+  userName: {
+    type: String,
+  },
+  contactNo: {
+    type: String,
+  },
+  deliveryAddress: {
+    type: String,
+  },
   totalAmount: {
     type: Number,
     default: 0,
@@ -1700,14 +1710,6 @@ app.get("/OrderPopulate", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-
-
-
-
-
-
-
 
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
@@ -1846,22 +1848,15 @@ app.get("/OrderItem/:orderId", async (req, res) => {
         populate: [
           {
             path: "variantId",
-            populate: {
-              path: "productId",
-              populate: ["subcategoryId", "brandId"],
-            },
+            populate: [
+              { path: "productId", populate: ["subcategoryId", "brandId"] },
+              { path: "colorId" }, // populate color here
+            ],
           },
-          {
-            path: "sizeId",
-          },
+          { path: "sizeId" }, // populate size
         ],
-      })
-      .populate({
-        path: "variantSizeId.variantId",
-        populate: {
-          path: "colorId",
-        },
       });
+      
     if (item.length === 0) {
       return res.send({ message: "Order item not found", item: [] });
     } else {
@@ -3423,6 +3418,11 @@ app.post("/verify-payment", async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
       orderId,
+      userName,
+      contactNo,
+      deliveryAddress,
+      amount,
+      userId,
     } = req.body;
 
     console.log("Received orderId:", orderId);
@@ -3435,10 +3435,18 @@ app.post("/verify-payment", async (req, res) => {
       .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-      await Order.findByIdAndUpdate(orderId, {
-        orderStatus: "paymentSuccess",
-        razorpayPaymentId: razorpay_payment_id,
-      });
+      const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          orderStatus: "paymentSuccess",
+          razorpayPaymentId: razorpay_payment_id,
+          totalAmount: amount,
+          userName: userName,
+          contactNo: contactNo,
+          deliveryAddress: deliveryAddress,
+        },
+        { new: true }
+      );
 
       const orderItems = await OrderItem.find({ orderId });
       for (let item of orderItems) {
@@ -3448,7 +3456,13 @@ app.post("/verify-payment", async (req, res) => {
         );
       }
 
-      return res.status(200).json({ message: "Payment verified" });
+      return res.status(200).json({
+        message: "Payment verified",
+        orderId: updatedOrder._id,
+        paymentId: razorpay_payment_id,
+        amount: updatedOrder.totalAmount,
+        deliveryAddress: updatedOrder.deliveryAddress,
+      });
     } else {
       return res.status(400).json({ message: "Invalid signature" });
     }
