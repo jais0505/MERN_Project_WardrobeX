@@ -1,3 +1,4 @@
+import About from '../../components/about/About'
 import AnnouncementBar from '../../components/announcementBar/AnnouncementBar'
 import Footer from '../../components/footer/Footer'
 import Hero from '../../components/hero/Hero'
@@ -11,6 +12,7 @@ const GuestHome = () => {
       <Navbar />
       <Hero />
       <Product />
+      <About />
       <Footer />
     </div>
   )

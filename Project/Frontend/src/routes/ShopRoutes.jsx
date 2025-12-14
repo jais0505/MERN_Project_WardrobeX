@@ -8,6 +8,8 @@ import ViewVariants from "../modules/shop/pages/viewVariants/ViewVariants"
 import AddSizeAndImage from "../modules/shop/pages/addSizeAndImage/AddSizeAndImage"
 import ManageStock from "../modules/shop/pages/manageStock/ManageStock"
 import ShopProfile from "../modules/shop/pages/shopprofile/ShopProfile"
+import ShopOrders from "../modules/shop/pages/shoporders/ShopOrders"
+import OrderDetails from "../modules/shop/pages/orderdetails/OrderDetails"
 
 
 const ShopRoutes = () => {
@@ -22,6 +24,8 @@ const ShopRoutes = () => {
             <Route path="/viewvariants/:id" element={<ViewVariants />} />
             <Route path="/addsizeandimage/:id" element={<AddSizeAndImage />} />
             <Route path="/addstock/:id" element={<ManageStock />} />
+            <Route path="/orders" element={<ShopOrders />} />
+            <Route path="/order-details" element={<OrderDetails />} />
         </Routes>
     )
 }

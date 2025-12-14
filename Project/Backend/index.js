@@ -1711,6 +1711,201 @@ app.get("/OrderPopulate", async (req, res) => {
   }
 });
 
+//Fetching orders for myorders
+app.get("/order/user/:userId", async ( req, res ) => {
+  try{
+
+    const userId = req.params.userId;
+
+    const orders = await Order.find({
+      userId,
+      orderStatus: { $nin: [ "inCart", "buyNow" ]}
+    }).sort({ orderDate: -1});
+
+    if(!orders.length){
+      return res.status(200).json({orders: []});
+    }
+
+    const ordersResponse = [];
+
+    for(const order of orders){
+      const orderItems = await OrderItem.find({ orderId: order._id })
+        .populate({
+          path: "variantSizeId",
+          populate: [
+            { path: "sizeId" },
+            {
+              path: "variantId",
+              populate: [
+                { path: "colorId" },
+                {
+                  path: "productId",
+                  populate: { path: "brandId" }
+                }
+              ]
+            }
+          ]
+        });
+
+        if (!orderItems.length) continue;
+
+        const variantIds = orderItems.map(
+        item => item.variantSizeId.variantId._id
+      );
+
+      const images = await Image.find({
+        variantId: { $in: variantIds }
+      });
+
+      const imageMap = {};
+      images.forEach(img => {
+        imageMap[img.variantId.toString()] = img.productImage;
+      });
+
+      const previewItem = orderItems[0];
+      const variantId = previewItem.variantSizeId.variantId._id.toString();
+
+      // 8️⃣ Build response object
+      ordersResponse.push({
+        orderId: order._id,
+        orderDate: order.orderDate,
+        orderStatus: order.orderStatus,
+        totalAmount: order.totalAmount,
+        deliveryAddress: order.deliveryAddress,
+        totalItems: orderItems.length,
+
+        previewItem: {
+          productName:
+            previewItem.variantSizeId.variantId.productId.productName,
+
+          // ✅ Variant image (color specific)
+          productImage:
+            imageMap[variantId] ||
+            previewItem.variantSizeId.variantId.productId.productImage,
+
+          brandName:
+            previewItem.variantSizeId.variantId.productId.brandId.brandName,
+
+          sizeName:
+            previewItem.variantSizeId.sizeId.sizeName,
+
+          colorName:
+            previewItem.variantSizeId.variantId.colorId.colorName
+        }
+      });
+
+    }
+    return res.status(200).json({ orders: ordersResponse });
+
+  } catch (err) {
+    console.error("Error fetching user orders:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+//OrderDetails data fetch
+app.get("/order/details/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // 1️⃣ Fetch order
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 2️⃣ Fetch order items with full population
+    const orderItems = await OrderItem.find({ orderId })
+      .populate({
+        path: "variantSizeId",
+        populate: [
+          { path: "sizeId" },
+          {
+            path: "variantId",
+            populate: [
+              { path: "colorId" },
+              {
+                path: "productId",
+                populate: { path: "brandId" }
+              }
+            ]
+          }
+        ]
+      });
+
+    if (!orderItems.length) {
+      return res.status(200).json({
+        order,
+        items: []
+      });
+    }
+
+    // 3️⃣ Fetch variant images
+    const variantIds = orderItems.map(
+      item => item.variantSizeId.variantId._id
+    );
+
+    const images = await Image.find({
+      variantId: { $in: variantIds }
+    });
+
+    const imageMap = {};
+    images.forEach(img => {
+      imageMap[img.variantId.toString()] = img.productImage;
+    });
+
+    // 4️⃣ Build items response
+    const itemsResponse = orderItems.map(item => {
+      const variant = item.variantSizeId.variantId;
+      const product = variant.productId;
+      const variantId = variant._id.toString();
+
+      return {
+        orderItemId: item._id,
+        productName: product.productName,
+        brandName: product.brandId.brandName,
+        productImage:
+          imageMap[variantId] || product.productImage,
+        sizeName: item.variantSizeId.sizeId.sizeName,
+        colorName: variant.colorId.colorName,
+        quantity: item.quantity,
+        price: item.orderItemPrice,
+        itemStatus: item.orderItemStatus
+      };
+    });
+
+    // 5️⃣ Final response
+    return res.status(200).json({
+      order: {
+        orderId: order._id,
+        orderDate: order.orderDate,
+        orderStatus: order.orderStatus,
+        totalAmount: order.totalAmount,
+        deliveryAddress: order.deliveryAddress,
+        userName: order.userName,
+        contactNo: order.contactNo,
+        razorpayPaymentId: order.razorpayPaymentId,
+      },
+      items: itemsResponse
+    });
+
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
+
+
+
+
+
+
+
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
     type: mongoose.Schema.Types.ObjectId,

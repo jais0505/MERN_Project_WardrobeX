@@ -22,7 +22,7 @@ const UserRoutes = () => {
         <Route path="/profilesettings" element={<ProfileSettings />} />
         <Route path="/order-success" element={<OrderSuccess />}/>
         <Route path="/myorders" element={<MyOrders />}/>
-        <Route path="/order-details" element={<OrderDetails />}/>
+        <Route path="/order-details/:orderId" element={<OrderDetails />}/>
         <Route path="/checkout" element={<CheckOut />}/>
     </Routes> 
   )

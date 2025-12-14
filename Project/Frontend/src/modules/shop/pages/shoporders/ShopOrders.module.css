@@ -1,0 +1,414 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: #666666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: #ffffff;
+  padding: 1.5rem;
+  border: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  border-color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.statIcon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 50%;
+  color: #000000;
+}
+
+.statInfo {
+  flex: 1;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: #666666;
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+}
+
+/* Filter Bar */
+.filterBar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  flex: 1;
+  min-width: 300px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  transition: border-color 0.3s ease;
+}
+
+.searchBox:focus-within {
+  border-color: #000000;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: #999999;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: none;
+  font-size: 0.95rem;
+  outline: none;
+  background: transparent;
+}
+
+.searchInput::placeholder {
+  color: #999999;
+}
+
+.filterSelect {
+  padding: 0.875rem 1.5rem;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.filterSelect:hover {
+  border-color: #000000;
+}
+
+.filterSelect:focus {
+  border-color: #000000;
+}
+
+/* Orders Container */
+.ordersContainer {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  min-height: 400px;
+}
+
+.ordersList {
+  display: flex;
+  flex-direction: column;
+}
+
+.orderCard {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  transition: background 0.2s ease;
+}
+
+.orderCard:last-child {
+  border-bottom: none;
+}
+
+.orderCard:hover {
+  background: #fafafa;
+}
+
+/* Order Header */
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.orderIdSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.orderIdLabel {
+  font-size: 0.75rem;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.orderId {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0.5px;
+}
+
+.orderDate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666666;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Order Body */
+.orderBody {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.orderInfo {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.infoValue {
+  font-size: 1rem;
+  color: #000000;
+  font-weight: 600;
+}
+
+.infoValueAmount {
+  font-size: 1.25rem;
+  color: #000000;
+  font-weight: 700;
+}
+
+/* Order Status */
+.orderStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.statusGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.statusLabel {
+  font-size: 0.75rem;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.statusBadge {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.paymentBadge {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: #10b98115;
+  color: #10b981;
+  border-radius: 4px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Order Footer */
+.orderFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.viewDetailsBtn {
+  background: #000000;
+  color: #ffffff;
+  padding: 0.75rem 2rem;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.viewDetailsBtn:hover {
+  background: #333333;
+  transform: translateX(3px);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  margin-bottom: 1.5rem;
+  opacity: 0.3;
+  color: #666666;
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyText {
+  color: #666666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .filterBar {
+    flex-direction: column;
+  }
+
+  .searchBox {
+    min-width: 100%;
+  }
+
+  .filterSelect {
+    width: 100%;
+  }
+
+  .orderBody {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .orderInfo {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .orderStatus {
+    align-items: flex-start;
+  }
+
+  .statusGroup {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .orderFooter {
+    justify-content: stretch;
+  }
+
+  .viewDetailsBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .orderIdSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
