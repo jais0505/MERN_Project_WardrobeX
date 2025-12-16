@@ -1,341 +1,364 @@
-import React, { useState } from 'react';
-import { 
-  FiPackage, 
-  FiCalendar, 
-  FiCreditCard, 
-  FiCheckCircle, 
-  FiUser, 
-  FiPhone, 
+import React, { useEffect, useState } from "react";
+import {
+  FiPackage,
+  FiUser,
+  FiPhone,
   FiMapPin,
+  FiCreditCard,
+  FiCheckCircle,
   FiArrowLeft,
-  FiAlertCircle
-} from 'react-icons/fi';
-import styles from './OrderDetails.module.css';
+} from "react-icons/fi";
+import { MdCheckCircle } from "react-icons/md";
+import styles from "./OrderDetails.module.css";
+import { useNavigate, useParams } from "react-router";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const OrderDetails = () => {
-  // Sample order data
-  const [orderData] = useState({
-    id: 'ORD-2847',
-    date: '2024-12-14',
-    paymentMethod: 'UPI',
-    paymentStatus: 'paid',
-    currentStatus: 'processing',
-    totalAmount: 8999,
-    customer: {
-      name: 'Rajesh Kumar',
-      phone: '+91 98765 43210',
-      address: '123, MG Road, Koramangala, Bangalore, Karnataka - 560034'
-    },
-    items: [
-      {
-        id: 1,
-        image: '👔',
-        name: 'Premium Cotton Shirt',
-        size: 'L',
-        color: 'Navy Blue',
-        quantity: 2,
-        price: 2999,
-        status: 'processing'
-      },
-      {
-        id: 2,
-        image: '👖',
-        name: 'Slim Fit Denim Jeans',
-        size: '32',
-        color: 'Dark Blue',
-        quantity: 1,
-        price: 3499,
-        status: 'processing'
-      }
-    ]
-  });
+  const { orderItemId } = useParams();
+  console.log("ItemId:", orderItemId);
+  const navigate = useNavigate();
 
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [orderItem, setOrderItem] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const statusConfig = {
-    payment_success: { label: 'Payment Success', color: '#10b981', canUpdate: false },
-    processing: { label: 'Processing', color: '#f59e0b', canUpdate: true },
-    shipped: { label: 'Shipped', color: '#3b82f6', canUpdate: true },
-    delivered: { label: 'Delivered', color: '#8b5cf6', canUpdate: true },
-    cancelled: { label: 'Cancelled', color: '#ef4444', canUpdate: true },
-    inCart: { label: 'In Cart', color: '#6b7280', canUpdate: false },
-    buyNow: { label: 'Buy Now', color: '#6b7280', canUpdate: false },
-    paymentPending: { label: 'Payment Pending', color: '#f59e0b', canUpdate: false }
+  const fetchOrderItem = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/order-item/${orderItemId}`
+      );
+      setOrderItem(res.data);
+    } catch (err) {
+      console.error("Failed to fetch order item", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updatableStatuses = [
-    { value: 'processing', label: 'Processing' },
-    { value: 'shipped', label: 'Shipped' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'cancelled', label: 'Cancelled' }
+  useEffect(() => {
+    if (orderItemId) fetchOrderItem();
+  }, [orderItemId]);
+
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const timelineStages = [
+    { key: "processing", label: "Processing" },
+    { key: "packed", label: "Packed" },
+    { key: "shipped", label: "Shipped" },
+    { key: "outForDelivery", label: "Out for Delivery" },
+    { key: "delivered", label: "Delivered" },
   ];
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const getCurrentStageIndex = () => {
+    if (!orderItem) return -1;
+    return timelineStages.findIndex(
+      (stage) => stage.key === orderItem.orderItemStatus
+    );
+  };
+
+  const getNextAction = () => {
+    const currentIndex = getCurrentStageIndex();
+    if (currentIndex === -1 || currentIndex >= timelineStages.length - 1) {
+      return null;
+    }
+    return timelineStages[currentIndex + 1];
+  };
+
+  const handleStatusUpdate = async () => {
+    const nextAction = getNextAction();
+    if (!nextAction) return;
+
+    try {
+      setIsUpdating(true);
+
+      await axios.patch(
+        `http://localhost:5000/order-item/status/${orderItemId}`,
+        { status: nextAction.key }
+      );
+
+        setOrderItem((prev) => ({
+      ...prev,
+      orderItemStatus: nextAction.key,
+    }));
+
+    // ✅ Success toast
+    toast.success(`Order marked as ${nextAction.label}`);
+    } catch (err) {
+      console.error("Status update failed", err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const formatAmount = (amount) => {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
-  const handleStatusUpdate = () => {
-    if (!selectedStatus) return;
-    
-    setIsUpdating(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsUpdating(false);
-      alert(`Order status updated to: ${updatableStatuses.find(s => s.value === selectedStatus)?.label}`);
-      setSelectedStatus('');
-    }, 1000);
-  };
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loader}></div>
+        <p>Loading order details...</p>
+      </div>
+    );
+  }
 
-  const calculateSubtotal = () => {
-    return orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  };
+  if (!orderItem) {
+    return (
+      <div className={styles.errorContainer}>
+        <FiPackage size={64} />
+        <h2>Order Not Found</h2>
+        <button onClick={() => navigate("/shop/orders")} className={styles.errorBtn}>
+          Back to Orders
+        </button>
+      </div>
+    );
+  }
+
+  const currentStageIndex = getCurrentStageIndex();
+  const nextAction = getNextAction();
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <button className={styles.backBtn}>
+      {/* Header Section */}
+      <div className={styles.pageHeader}>
+        <button
+          className={styles.backBtn}
+          onClick={() => navigate("/shop/orders")}
+        >
           <FiArrowLeft size={20} />
-          Back to Orders
+          <span>Back to Orders</span>
         </button>
-        <div className={styles.headerInfo}>
-          <h1 className={styles.title}>Order Details</h1>
-          <span className={styles.orderId}>{orderData.id}</span>
+        
+        <div className={styles.headerContent}>
+          <div className={styles.headerLeft}>
+            <h1 className={styles.pageTitle}>Order Item Details</h1>
+            <span className={styles.orderItemId}>#{orderItem._id.slice(-8).toUpperCase()}</span>
+          </div>
+          <div className={styles.headerRight}>
+            <span
+              className={styles.statusBadge}
+              style={{
+                backgroundColor:
+                  currentStageIndex === timelineStages.length - 1
+                    ? "#10b98115"
+                    : "#f59e0b15",
+                color:
+                  currentStageIndex === timelineStages.length - 1
+                    ? "#10b981"
+                    : "#f59e0b",
+              }}
+            >
+              <span className={styles.statusDot}></span>
+              {timelineStages[currentStageIndex]?.label}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className={styles.mainContent}>
-        {/* LEFT SIDE - Order Summary & Customer Info */}
-        <div className={styles.leftSection}>
-          {/* Order Summary */}
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>
-              <FiPackage size={20} />
-              Order Summary
-            </h2>
-            <div className={styles.cardContent}>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>
-                  <FiPackage size={16} />
-                  Order ID
-                </span>
-                <span className={styles.summaryValue}>{orderData.id}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>
-                  <FiCalendar size={16} />
-                  Order Date
-                </span>
-                <span className={styles.summaryValue}>{formatDate(orderData.date)}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>
-                  <FiCreditCard size={16} />
-                  Payment Method
-                </span>
-                <span className={styles.summaryValue}>{orderData.paymentMethod}</span>
-              </div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>
-                  <FiCheckCircle size={16} />
-                  Payment Status
-                </span>
-                <span className={styles.paymentBadge}>
-                  <FiCheckCircle size={14} />
-                  Paid
-                </span>
-              </div>
-              <div className={styles.summaryDivider}></div>
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabelBold}>Total Amount</span>
-                <span className={styles.summaryValueAmount}>{formatAmount(orderData.totalAmount)}</span>
-              </div>
+        {/* Left Column */}
+        <div className={styles.leftColumn}>
+          {/* Product Showcase - Hero Section */}
+          <div className={styles.productShowcase}>
+            <div className={styles.productImageContainer}>
+              <img
+                src={`http://localhost:5000/images/${orderItem.productImage}`}
+                alt={orderItem.productName}
+                className={styles.productImage}
+              />
             </div>
-          </div>
-
-          {/* Customer Info */}
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>
-              <FiUser size={20} />
-              Customer Information
-            </h2>
-            <div className={styles.cardContent}>
-              <div className={styles.customerRow}>
-                <FiUser size={18} className={styles.customerIcon} />
-                <div className={styles.customerInfo}>
-                  <span className={styles.customerLabel}>Name</span>
-                  <span className={styles.customerValue}>{orderData.customer.name}</span>
-                </div>
-              </div>
-              <div className={styles.customerRow}>
-                <FiPhone size={18} className={styles.customerIcon} />
-                <div className={styles.customerInfo}>
-                  <span className={styles.customerLabel}>Phone</span>
-                  <span className={styles.customerValue}>{orderData.customer.phone}</span>
-                </div>
-              </div>
-              <div className={styles.customerRow}>
-                <FiMapPin size={18} className={styles.customerIcon} />
-                <div className={styles.customerInfo}>
-                  <span className={styles.customerLabel}>Delivery Address</span>
-                  <span className={styles.customerValue}>{orderData.customer.address}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER - Ordered Items */}
-        <div className={styles.centerSection}>
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>
-              <FiPackage size={20} />
-              Ordered Items ({orderData.items.length})
-            </h2>
-            <div className={styles.itemsList}>
-              {orderData.items.map((item) => (
-                <div key={item.id} className={styles.itemCard}>
-                  <div className={styles.itemImage}>
-                    <span className={styles.itemIcon}>{item.image}</span>
-                  </div>
-                  <div className={styles.itemDetails}>
-                    <h3 className={styles.itemName}>{item.name}</h3>
-                    <div className={styles.itemMeta}>
-                      <span className={styles.itemMetaItem}>
-                        <strong>Size:</strong> {item.size}
-                      </span>
-                      <span className={styles.itemMetaDot}>•</span>
-                      <span className={styles.itemMetaItem}>
-                        <strong>Color:</strong> {item.color}
-                      </span>
-                      <span className={styles.itemMetaDot}>•</span>
-                      <span className={styles.itemMetaItem}>
-                        <strong>Qty:</strong> {item.quantity}
-                      </span>
-                    </div>
-                    <div className={styles.itemPrice}>
-                      {formatAmount(item.price)} × {item.quantity} = <strong>{formatAmount(item.price * item.quantity)}</strong>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className={styles.productDetails}>
+              <h2 className={styles.productName}>{orderItem.productName}</h2>
               
-              {/* Total Summary */}
-              <div className={styles.itemsTotal}>
-                <div className={styles.totalRow}>
-                  <span>Subtotal</span>
-                  <span>{formatAmount(calculateSubtotal())}</span>
+              <div className={styles.productVariants}>
+                <div className={styles.variantChip}>
+                  <span className={styles.variantLabel}>Color</span>
+                  <span className={styles.variantValue}>{orderItem.colorName}</span>
                 </div>
-                <div className={styles.totalRow}>
-                  <span>Shipping</span>
-                  <span>Free</span>
+                <div className={styles.variantChip}>
+                  <span className={styles.variantLabel}>Size</span>
+                  <span className={styles.variantValue}>{orderItem.sizeName}</span>
                 </div>
-                <div className={styles.totalDivider}></div>
-                <div className={styles.totalRowFinal}>
-                  <span>Total</span>
-                  <span>{formatAmount(orderData.totalAmount)}</span>
+              </div>
+
+              <div className={styles.productMetrics}>
+                <div className={styles.metricBox}>
+                  <FiPackage size={24} className={styles.metricIcon} />
+                  <div className={styles.metricContent}>
+                    <span className={styles.metricLabel}>Quantity</span>
+                    <span className={styles.metricValue}>{orderItem.quantity}</span>
+                  </div>
+                </div>
+                <div className={styles.metricBox}>
+                  <FiCreditCard size={24} className={styles.metricIcon} />
+                  <div className={styles.metricContent}>
+                    <span className={styles.metricLabel}>Item Price</span>
+                    <span className={styles.metricValue}>{formatAmount(orderItem.price)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Delivery Card */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrapper}>
+                <FiMapPin size={22} />
+                <h3 className={styles.cardTitle}>Delivery Information</h3>
+              </div>
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoIconWrapper}>
+                    <FiUser size={18} />
+                  </div>
+                  <div className={styles.infoContent}>
+                    <span className={styles.infoLabel}>Customer Name</span>
+                    <span className={styles.infoValue}>{orderItem.userName}</span>
+                  </div>
+                </div>
+                
+                <div className={styles.infoItem}>
+                  <div className={styles.infoIconWrapper}>
+                    <FiPhone size={18} />
+                  </div>
+                  <div className={styles.infoContent}>
+                    <span className={styles.infoLabel}>Contact Number</span>
+                    <span className={styles.infoValue}>{orderItem.contactNo}</span>
+                  </div>
+                </div>
+                
+                <div className={`${styles.infoItem} ${styles.infoItemFull}`}>
+                  <div className={styles.infoIconWrapper}>
+                    <FiMapPin size={18} />
+                  </div>
+                  <div className={styles.infoContent}>
+                    <span className={styles.infoLabel}>Delivery Address</span>
+                    <span className={styles.infoValueAddress}>{orderItem.deliveryAddress}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Card */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrapper}>
+                <FiCreditCard size={22} />
+                <h3 className={styles.cardTitle}>Payment Information</h3>
+              </div>
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.paymentGrid}>
+                <div className={styles.paymentItem}>
+                  <span className={styles.paymentLabel}>Payment Status</span>
+                  <span className={styles.paymentBadge}>
+                    <FiCheckCircle size={16} />
+                    Paid
+                  </span>
+                </div>
+                <div className={styles.paymentItem}>
+                  <span className={styles.paymentLabel}>Payment Method</span>
+                  <span className={styles.paymentValue}>Razorpay</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT SIDE - Status Update */}
-        <div className={styles.rightSection}>
+        {/* Right Column */}
+        <div className={styles.rightColumn}>
+          {/* Timeline Card */}
           <div className={styles.card}>
-            <h2 className={styles.cardTitle}>
-              <FiAlertCircle size={20} />
-              Order Status
-            </h2>
-            <div className={styles.cardContent}>
-              <div className={styles.statusSection}>
-                <span className={styles.statusLabel}>Current Status</span>
-                <span 
-                  className={styles.currentStatusBadge}
-                  style={{ 
-                    backgroundColor: `${statusConfig[orderData.currentStatus].color}15`,
-                    color: statusConfig[orderData.currentStatus].color 
-                  }}
-                >
-                  {statusConfig[orderData.currentStatus].label}
-                </span>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrapper}>
+                <FiPackage size={22} />
+                <h3 className={styles.cardTitle}>Order Timeline</h3>
               </div>
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.timeline}>
+                {timelineStages.map((stage, index) => {
+                  const isCompleted = index <= currentStageIndex;
+                  const isCurrent = index === currentStageIndex;
 
-              {statusConfig[orderData.currentStatus]?.canUpdate ? (
-                <>
-                  <div className={styles.statusDivider}></div>
-                  <div className={styles.updateSection}>
-                    <label className={styles.updateLabel}>Update Status</label>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className={styles.statusSelect}
+                  return (
+                    <div
+                      key={stage.key}
+                      className={`${styles.timelineStep} ${
+                        isCompleted ? styles.timelineStepCompleted : ""
+                      } ${isCurrent ? styles.timelineStepCurrent : ""}`}
                     >
-                      <option value="">Select New Status</option>
-                      {updatableStatuses
-                        .filter(s => s.value !== orderData.currentStatus)
-                        .map((status) => (
-                          <option key={status.value} value={status.value}>
-                            {status.label}
-                          </option>
-                        ))
-                      }
-                    </select>
-                    <button
-                      className={styles.updateBtn}
-                      onClick={handleStatusUpdate}
-                      disabled={!selectedStatus || isUpdating}
-                    >
-                      {isUpdating ? 'Updating...' : 'Update Status'}
-                    </button>
+                      <div className={styles.timelineMarker}>
+                        {isCompleted ? (
+                          <MdCheckCircle size={20} />
+                        ) : (
+                          <div className={styles.timelineDotEmpty}></div>
+                        )}
+                      </div>
+                      <div className={styles.timelineLabel}>{stage.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Card */}
+          <div className={styles.actionCard}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitleWrapper}>
+                <FiCheckCircle size={22} />
+                <h3 className={styles.cardTitle}>Update Status</h3>
+              </div>
+            </div>
+            <div className={styles.cardContent}>
+              {nextAction ? (
+                <div className={styles.actionContent}>
+                  <div className={styles.currentStatusBox}>
+                    <span className={styles.currentStatusLabel}>Current Status</span>
+                    <span className={styles.currentStatusValue}>
+                      {timelineStages[currentStageIndex]?.label}
+                    </span>
                   </div>
-                </>
+                  
+                  <button
+                    className={styles.updateButton}
+                    onClick={handleStatusUpdate}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <div className={styles.buttonLoader}></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <FiCheckCircle size={20} />
+                        Mark as {nextAction.label}
+                      </>
+                    )}
+                  </button>
+                  
+                  <p className={styles.actionHint}>
+                    This will move the order to the next stage
+                  </p>
+                </div>
               ) : (
-                <div className={styles.cannotUpdateNotice}>
-                  <FiAlertCircle size={18} />
-                  <p>This order status cannot be updated at this time.</p>
+                <div className={styles.completedState}>
+                  <div className={styles.completedIconWrapper}>
+                    <FiCheckCircle size={48} />
+                  </div>
+                  <h3 className={styles.completedTitle}>Order Delivered!</h3>
+                  <p className={styles.completedText}>
+                    This order item has been successfully delivered to the customer
+                  </p>
                 </div>
               )}
-
-              {/* Status Timeline */}
-              <div className={styles.statusDivider}></div>
-              <div className={styles.timeline}>
-                <h3 className={styles.timelineTitle}>Order Timeline</h3>
-                <div className={styles.timelineItem}>
-                  <div className={styles.timelineDot}></div>
-                  <div className={styles.timelineContent}>
-                    <span className={styles.timelineLabel}>Order Placed</span>
-                    <span className={styles.timelineDate}>{formatDate(orderData.date)}</span>
-                  </div>
-                </div>
-                <div className={styles.timelineItem}>
-                  <div className={styles.timelineDot}></div>
-                  <div className={styles.timelineContent}>
-                    <span className={styles.timelineLabel}>Payment Confirmed</span>
-                    <span className={styles.timelineDate}>{formatDate(orderData.date)}</span>
-                  </div>
-                </div>
-                <div className={styles.timelineItem}>
-                  <div className={styles.timelineDotActive}></div>
-                  <div className={styles.timelineContent}>
-                    <span className={styles.timelineLabel}>Processing</span>
-                    <span className={styles.timelineDate}>Current</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -344,4 +367,4 @@ const OrderDetails = () => {
   );
 };
 
-export default OrderDetails
+export default OrderDetails;

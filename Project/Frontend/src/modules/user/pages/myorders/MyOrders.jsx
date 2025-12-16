@@ -17,6 +17,7 @@ const MyOrders = () => {
           `http://127.0.0.1:5000/order/user/${userId}`
         );
         setOrders(res.data.orders || []);
+        console.log("MYOrderData:", res.data.orders);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -26,6 +27,32 @@ const MyOrders = () => {
 
     fetchOrders();
   }, [userId]);
+
+  const ORDER_STATUS_LABELS = {
+    inCart: "In Cart",
+    buyNow: "Order Initiated",
+    paymentPending: "Payment Pending",
+    paymentSuccess: "Order Placed",
+    cancelled: "Order Cancelled",
+    refunded: "Refunded",
+  };
+
+  const getDeliveryLabel = (status) => {
+    if (!status) return "Processing";
+
+    switch (status.toLowerCase()) {
+      case "packed":
+        return "Packed";
+      case "shipped":
+        return "Shipped";
+      case "out for delivery":
+        return "Out for Delivery";
+      case "delivered":
+        return "Delivered";
+      default:
+        return "Processing";
+    }
+  };
 
   const shortenOrderId = (orderId) => {
     if (!orderId || orderId.length < 10) return orderId;
@@ -41,18 +68,16 @@ const MyOrders = () => {
     });
   };
 
-  const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
-      case "paymentsuccess":
-        return styles.statusPayment;
-      case "processing":
-        return styles.statusProcessing;
-      case "shipped":
-        return styles.statusShipped;
-      case "delivered":
-        return styles.statusDelivered;
+  const getOrderStatusClass = (status) => {
+    switch (status) {
+      case "paymentSuccess":
+        return styles.statusPayment; 
+      case "paymentPending":
+        return styles.statusProcessing; 
       case "cancelled":
-        return styles.statusCancelled;
+        return styles.statusCancelled; 
+      case "refunded":
+        return styles.statusDefault;
       default:
         return styles.statusDefault;
     }
@@ -108,12 +133,18 @@ const MyOrders = () => {
                       Ordered on {formatDate(order.orderDate)}
                     </span>
                   </div>
-                  <div
-                    className={`${styles.statusBadge} ${getStatusClass(
-                      order.orderStatus
-                    )}`}
-                  >
-                    {order.orderStatus}
+                  <div className={styles.statusWrapper}>
+                    <span
+                      className={`${styles.statusBadge} ${getOrderStatusClass(
+                        order.orderStatus
+                      )}`}
+                    >
+                      {ORDER_STATUS_LABELS[order.orderStatus]}
+                    </span>
+
+                    <span className={styles.deliveryStatus}>
+                      {getDeliveryLabel(order.previewItem?.itemStatus)}
+                    </span>
                   </div>
                 </div>
 

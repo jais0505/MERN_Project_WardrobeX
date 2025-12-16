@@ -1600,11 +1600,8 @@ const orderSchemaStruture = new mongoose.Schema({
       "buyNow",
       "paymentPending",
       "paymentSuccess",
-      "processing",
-      "shipped",
-      "delivered",
       "cancelled",
-      "returned",
+      "refunded"
     ],
     default: "inCart",
   },
@@ -1712,53 +1709,51 @@ app.get("/OrderPopulate", async (req, res) => {
 });
 
 //Fetching orders for myorders
-app.get("/order/user/:userId", async ( req, res ) => {
-  try{
-
+app.get("/order/user/:userId", async (req, res) => {
+  try {
     const userId = req.params.userId;
 
     const orders = await Order.find({
       userId,
-      orderStatus: { $nin: [ "inCart", "buyNow" ]}
-    }).sort({ orderDate: -1});
+      orderStatus: { $nin: ["inCart", "buyNow"] },
+    }).sort({ orderDate: -1 });
 
-    if(!orders.length){
-      return res.status(200).json({orders: []});
+    if (!orders.length) {
+      return res.status(200).json({ orders: [] });
     }
 
     const ordersResponse = [];
 
-    for(const order of orders){
-      const orderItems = await OrderItem.find({ orderId: order._id })
-        .populate({
-          path: "variantSizeId",
-          populate: [
-            { path: "sizeId" },
-            {
-              path: "variantId",
-              populate: [
-                { path: "colorId" },
-                {
-                  path: "productId",
-                  populate: { path: "brandId" }
-                }
-              ]
-            }
-          ]
-        });
+    for (const order of orders) {
+      const orderItems = await OrderItem.find({ orderId: order._id }).populate({
+        path: "variantSizeId",
+        populate: [
+          { path: "sizeId" },
+          {
+            path: "variantId",
+            populate: [
+              { path: "colorId" },
+              {
+                path: "productId",
+                populate: { path: "brandId" },
+              },
+            ],
+          },
+        ],
+      });
 
-        if (!orderItems.length) continue;
+      if (!orderItems.length) continue;
 
-        const variantIds = orderItems.map(
-        item => item.variantSizeId.variantId._id
+      const variantIds = orderItems.map(
+        (item) => item.variantSizeId.variantId._id
       );
 
       const images = await Image.find({
-        variantId: { $in: variantIds }
+        variantId: { $in: variantIds },
       });
 
       const imageMap = {};
-      images.forEach(img => {
+      images.forEach((img) => {
         imageMap[img.variantId.toString()] = img.productImage;
       });
 
@@ -1786,39 +1781,33 @@ app.get("/order/user/:userId", async ( req, res ) => {
           brandName:
             previewItem.variantSizeId.variantId.productId.brandId.brandName,
 
-          sizeName:
-            previewItem.variantSizeId.sizeId.sizeName,
+          sizeName: previewItem.variantSizeId.sizeId.sizeName,
 
-          colorName:
-            previewItem.variantSizeId.variantId.colorId.colorName
-        }
+          colorName: previewItem.variantSizeId.variantId.colorId.colorName,
+        },
       });
-
     }
     return res.status(200).json({ orders: ordersResponse });
-
   } catch (err) {
     console.error("Error fetching user orders:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
 
-
 //OrderDetails data fetch
-app.get("/order/details/:orderId", async (req, res) => {
-  try {
-    const { orderId } = req.params;
+  app.get("/order/details/:orderId", async (req, res) => {
+    try {
+      const { orderId } = req.params;
 
-    // 1️⃣ Fetch order
-    const order = await Order.findById(orderId);
+      // 1️⃣ Fetch order
+      const order = await Order.findById(orderId);
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
-    // 2️⃣ Fetch order items with full population
-    const orderItems = await OrderItem.find({ orderId })
-      .populate({
+      // 2️⃣ Fetch order items with full population
+      const orderItems = await OrderItem.find({ orderId }).populate({
         path: "variantSizeId",
         populate: [
           { path: "sizeId" },
@@ -1828,83 +1817,72 @@ app.get("/order/details/:orderId", async (req, res) => {
               { path: "colorId" },
               {
                 path: "productId",
-                populate: { path: "brandId" }
-              }
-            ]
-          }
-        ]
+                populate: { path: "brandId" },
+              },
+            ],
+          },
+        ],
       });
 
-    if (!orderItems.length) {
+      if (!orderItems.length) {
+        return res.status(200).json({
+          order,
+          items: [],
+        });
+      }
+
+      // 3️⃣ Fetch variant images
+      const variantIds = orderItems.map(
+        (item) => item.variantSizeId.variantId._id
+      );
+
+      const images = await Image.find({
+        variantId: { $in: variantIds },
+      });
+
+      const imageMap = {};
+      images.forEach((img) => {
+        imageMap[img.variantId.toString()] = img.productImage;
+      });
+
+      // 4️⃣ Build items response
+      const itemsResponse = orderItems.map((item) => {
+        const variant = item.variantSizeId.variantId;
+        const product = variant.productId;
+        const variantId = variant._id.toString();
+
+        return {
+          orderItemId: item._id,
+          productName: product.productName,
+          brandName: product.brandId.brandName,
+          productImage: imageMap[variantId] || product.productImage,
+          sizeName: item.variantSizeId.sizeId.sizeName,
+          colorName: variant.colorId.colorName,
+          quantity: item.quantity,
+          price: item.orderItemPrice,
+          itemStatus: item.orderItemStatus,
+        };
+      });
+
+      // 5️⃣ Final response
       return res.status(200).json({
-        order,
-        items: []
+        order: {
+          orderId: order._id,
+          orderDate: order.orderDate,
+          orderStatus: order.orderStatus,
+          totalAmount: order.totalAmount,
+          deliveryAddress: order.deliveryAddress,
+          userName: order.userName,
+          contactNo: order.contactNo,
+          razorpayPaymentId: order.razorpayPaymentId,
+        },
+        items: itemsResponse,
       });
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
-
-    // 3️⃣ Fetch variant images
-    const variantIds = orderItems.map(
-      item => item.variantSizeId.variantId._id
-    );
-
-    const images = await Image.find({
-      variantId: { $in: variantIds }
-    });
-
-    const imageMap = {};
-    images.forEach(img => {
-      imageMap[img.variantId.toString()] = img.productImage;
-    });
-
-    // 4️⃣ Build items response
-    const itemsResponse = orderItems.map(item => {
-      const variant = item.variantSizeId.variantId;
-      const product = variant.productId;
-      const variantId = variant._id.toString();
-
-      return {
-        orderItemId: item._id,
-        productName: product.productName,
-        brandName: product.brandId.brandName,
-        productImage:
-          imageMap[variantId] || product.productImage,
-        sizeName: item.variantSizeId.sizeId.sizeName,
-        colorName: variant.colorId.colorName,
-        quantity: item.quantity,
-        price: item.orderItemPrice,
-        itemStatus: item.orderItemStatus
-      };
-    });
-
-    // 5️⃣ Final response
-    return res.status(200).json({
-      order: {
-        orderId: order._id,
-        orderDate: order.orderDate,
-        orderStatus: order.orderStatus,
-        totalAmount: order.totalAmount,
-        deliveryAddress: order.deliveryAddress,
-        userName: order.userName,
-        contactNo: order.contactNo,
-        razorpayPaymentId: order.razorpayPaymentId,
-      },
-      items: itemsResponse
-    });
-
-  } catch (error) {
-    console.error("Error fetching order details:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-
-
-
-
-
-
-
-
+  });
 
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
@@ -1928,7 +1906,7 @@ const orderItemSchemaStructure = new mongoose.Schema({
   },
   orderItemStatus: {
     type: String,
-    enum: ["processing", "shipped", "delivered", "cancelled", "returned"],
+    enum: ["processing", "packed", "shipped", "outForDelivery", "delivered"],
     default: "processing",
   },
 });
@@ -2037,21 +2015,20 @@ app.get("/OrderItem/:orderId", async (req, res) => {
   try {
     const orderId = req.params.orderId;
 
-    const item = await OrderItem.find({ orderId })
-      .populate({
-        path: "variantSizeId",
-        populate: [
-          {
-            path: "variantId",
-            populate: [
-              { path: "productId", populate: ["subcategoryId", "brandId"] },
-              { path: "colorId" }, // populate color here
-            ],
-          },
-          { path: "sizeId" }, // populate size
-        ],
-      });
-      
+    const item = await OrderItem.find({ orderId }).populate({
+      path: "variantSizeId",
+      populate: [
+        {
+          path: "variantId",
+          populate: [
+            { path: "productId", populate: ["subcategoryId", "brandId"] },
+            { path: "colorId" }, // populate color here
+          ],
+        },
+        { path: "sizeId" }, // populate size
+      ],
+    });
+
     if (item.length === 0) {
       return res.send({ message: "Order item not found", item: [] });
     } else {
@@ -2143,6 +2120,292 @@ app.patch("/UpdateQty/:id", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+//OrderItems fetching for shop
+app.get("/OrderItemFetch/:shopId", async (req, res) => {
+  try {
+    const shopId = new mongoose.Types.ObjectId(req.params.shopId);
+
+    const shopOrderItems = await OrderItem.aggregate([
+      // 1️⃣ VariantSize
+      {
+        $lookup: {
+          from: "variantsizecollections",
+          localField: "variantSizeId",
+          foreignField: "_id",
+          as: "variantSize",
+        },
+      },
+      { $unwind: "$variantSize" },
+
+      // 2️⃣ Variant
+      {
+        $lookup: {
+          from: "variantcollections",
+          localField: "variantSize.variantId",
+          foreignField: "_id",
+          as: "variant",
+        },
+      },
+      { $unwind: "$variant" },
+
+      // 3️⃣ Product
+      {
+        $lookup: {
+          from: "productcollections",
+          localField: "variant.productId",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+
+      // 4️⃣ Filter by shop
+      {
+        $match: { "product.shopId": shopId },
+      },
+
+      // 5️⃣ Variant Images (variantId only – schema correct)
+      {
+        $lookup: {
+          from: "imagecollections",
+          localField: "variant._id",
+          foreignField: "variantId",
+          as: "variantImages",
+        },
+      },
+
+      // 6️⃣ Color
+      {
+        $lookup: {
+          from: "colorcollections",
+          localField: "variant.colorId",
+          foreignField: "_id",
+          as: "color",
+        },
+      },
+      { $unwind: "$color" },
+
+      // 7️⃣ Size
+      {
+        $lookup: {
+          from: "sizecollections",
+          localField: "variantSize.sizeId",
+          foreignField: "_id",
+          as: "size",
+        },
+      },
+      { $unwind: "$size" },
+
+      // 8️⃣ Order
+      {
+        $lookup: {
+          from: "ordercollections",
+          localField: "orderId",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      { $unwind: "$order" },
+
+      // 9️⃣ Final shape
+      {
+        $project: {
+          orderItemId: "$_id",
+          orderId: "$order._id",
+
+          productName: "$product.productName",
+          productImage: { $first: "$variantImages.productImage" },
+
+          colorName: "$color.colorName",
+          sizeName: "$size.sizeName",
+
+          quantity: 1,
+          price: "$orderItemPrice",
+          orderItemStatus: 1,
+
+          orderDate: "$order.orderDate",
+          deliveryAddress: "$order.deliveryAddress",
+          userName: "$order.userName",
+        },
+      },
+
+      // 🔟 Latest first
+      { $sort: { orderDate: -1 } },
+    ]);
+
+    res.status(200).json({ shopOrderItems });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//OrderItemDetails fetching for OrdeDetails
+app.get("/order-item/:orderItemId", async (req, res) => {
+  try {
+    const orderItemId = new mongoose.Types.ObjectId(req.params.orderItemId);
+
+    const result = await OrderItem.aggregate([
+      // 1️⃣ Match OrderItem
+      {
+        $match: { _id: orderItemId },
+      },
+
+      // 2️⃣ VariantSize
+      {
+        $lookup: {
+          from: "variantsizecollections",
+          localField: "variantSizeId",
+          foreignField: "_id",
+          as: "variantSize",
+        },
+      },
+      { $unwind: "$variantSize" },
+
+      // 3️⃣ Variant
+      {
+        $lookup: {
+          from: "variantcollections",
+          localField: "variantSize.variantId",
+          foreignField: "_id",
+          as: "variant",
+        },
+      },
+      { $unwind: "$variant" },
+
+      // 4️⃣ Size
+      {
+        $lookup: {
+          from: "sizecollections",
+          localField: "variantSize.sizeId",
+          foreignField: "_id",
+          as: "size",
+        },
+      },
+      { $unwind: "$size" },
+
+      // 5️⃣ Color
+      {
+        $lookup: {
+          from: "colorcollections",
+          localField: "variant.colorId",
+          foreignField: "_id",
+          as: "color",
+        },
+      },
+      { $unwind: "$color" },
+
+      // 6️⃣ Product
+      {
+        $lookup: {
+          from: "productcollections",
+          localField: "variant.productId",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+
+      // 7️⃣ Images
+      {
+        $lookup: {
+          from: "imagecollections",
+          localField: "variant._id",
+          foreignField: "variantId",
+          as: "images",
+        },
+      },
+
+      // 8️⃣ Order
+      {
+        $lookup: {
+          from: "ordercollections",
+          localField: "orderId",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      { $unwind: "$order" },
+
+      // 9️⃣ Final Shape
+      {
+        $project: {
+          orderItemId: "$_id",
+          orderItemStatus: 1,
+          quantity: 1,
+          price: "$orderItemPrice",
+
+          productName: "$product.productName",
+          productImage: { $first: "$images.productImage" },
+
+          colorName: "$color.colorName",
+          sizeName: "$size.sizeName",
+
+          orderDate: "$order.orderDate",
+          deliveryAddress: "$order.deliveryAddress",
+          userName: "$order.userName",
+          contactNo: "$order.contactNo",
+
+          paymentMethod: "$order.paymentMethod",
+          paymentStatus: "$order.paymentStatus",
+        },
+      },
+    ]);
+
+    if (!result.length) {
+      return res.status(404).json({ message: "Order item not found" });
+    }
+
+    res.status(200).json(result[0]);
+  } catch (err) { 
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//OrderItems Status Update
+app.patch("/order-item/status/:orderItemId", async (req, res) => {
+  try {
+    const { status } = req.body;
+    const orderItemId = req.params.orderItemId;
+
+    const allowedStatuses = [
+      "processing",
+      "packed",
+      "shipped",
+      "outForDelivery",
+      "delivered",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const updatedOrderItem = await OrderItem.findByIdAndUpdate(
+      orderItemId,
+      { orderItemStatus: status },
+      { new: true }
+    );
+
+    if (!updatedOrderItem) {
+      return res.status(404).json({ message: "Order item not found" });
+    }
+
+    res.status(200).json(updatedOrderItem);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
+
+
+
 
 const wishListSchemaStructure = new mongoose.Schema({
   productId: {

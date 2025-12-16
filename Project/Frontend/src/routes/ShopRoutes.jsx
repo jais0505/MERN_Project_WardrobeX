@@ -25,7 +25,7 @@ const ShopRoutes = () => {
             <Route path="/addsizeandimage/:id" element={<AddSizeAndImage />} />
             <Route path="/addstock/:id" element={<ManageStock />} />
             <Route path="/orders" element={<ShopOrders />} />
-            <Route path="/order-details" element={<OrderDetails />} />
+            <Route path="/order-details/:orderItemId" element={<OrderDetails/>} />
         </Routes>
     )
 }

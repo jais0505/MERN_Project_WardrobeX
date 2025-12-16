@@ -81,11 +81,11 @@ const OrderDetails = () => {
     return `${id.slice(0, 8)}...${id.slice(-8)}`;
   };
 
-  const handleDownloadInvoice = () => {
-    // Implement invoice download
-    console.log("Download invoice for:", orderId);
-    alert("Invoice download feature - integrate with your backend");
-  };
+  // const handleDownloadInvoice = () => {
+  //   // Implement invoice download
+  //   console.log("Download invoice for:", orderId);
+  //   alert("Invoice download feature - integrate with your backend");
+  // };
 
   if (loading) {
     return (
@@ -103,48 +103,37 @@ const OrderDetails = () => {
     );
   }
 
-  const ORDER_STAGE_INDEX = {
-    paymentPending: 0,
-    paymentSuccess: 1,
-    processing: 2,
-    shipped: 3,
-    delivered: 5,
-    cancelled: -1,
-    returned: -1,
-  };
-
-  const ORDER_STAGES = [
-    "Order Placed",
-    "Payment Success",
-    "Packed",
-    "Shipped",
-    "Out for Delivery",
-    "Delivered",
+  const ITEM_STAGES = [
+    { key: "processing", label: "Processing" },
+    { key: "packed", label: "Packed" },
+    { key: "shipped", label: "Shipped" },
+    { key: "outForDelivery", label: "Out for Delivery" },
+    { key: "delivered", label: "Delivered" },
   ];
 
-  const currentStageIndex = ORDER_STAGE_INDEX[orderData.orderStatus] ?? 0;
+  const getItemTimeline = (itemStatus) => {
+    if (!itemStatus) return [];
 
-  const timeline = ORDER_STAGES.map((stage, index) => ({
-    status: stage,
-    completed: index <= currentStageIndex,
-  }));
+    const currentIndex = ITEM_STAGES.findIndex(
+      (stage) => stage.key === itemStatus
+    );
 
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "delivered":
-        return styles.statusDelivered;
-      case "shipped":
-      case "out for delivery":
-        return styles.statusShipped;
-      case "payment success":
-      case "packed":
-        return styles.statusProcessing;
-      case "cancelled":
-        return styles.statusCancelled;
-      default:
-        return styles.statusDefault;
-    }
+    return ITEM_STAGES.map((stage, index) => ({
+      ...stage,
+      completed: index < currentIndex,
+      current: index === currentIndex,
+    }));
   };
+
+  const STATUS_LABELS = {
+    processing: "Processing",
+    packed: "Packed",
+    shipped: "Shipped",
+    outForDelivery: "Out for Delivery",
+    delivered: "Delivered",
+  };
+
+
 
   return (
     <div className={styles.container}>
@@ -172,15 +161,17 @@ const OrderDetails = () => {
                 </span>
               </div>
             </div>
-            <div className={styles.headerRight}>
+            {/* <div className={styles.headerRight}>
               <div
                 className={`${styles.statusBadge} ${getStatusColor(
                   orderData.orderStatus
                 )}`}
               >
-                {orderData.orderStatus}
+                {orderData.orderStatus === "paymentSuccess"
+                  ? "Order Placed"
+                  : orderData.orderStatus}
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className={styles.headerBottom}>
@@ -202,13 +193,13 @@ const OrderDetails = () => {
                 </div>
               </div>
             </div>
-            <button
+            {/* <button
               className={styles.downloadBtn}
               onClick={handleDownloadInvoice}
             >
               <MdDownload size={18} />
               Download Invoice
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -220,7 +211,7 @@ const OrderDetails = () => {
               <h2 className={styles.cardTitle}>Ordered Items</h2>
               <div className={styles.productsList}>
                 {orderData.products.map((product) => (
-                  <div key={product.productId} className={styles.productItem}>
+                  <div key={product.orderItemId} className={styles.productItem}>
                     <div className={styles.productImageBox}>
                       <img
                         src={`http://127.0.0.1:5000/images/${product.productImage}`}
@@ -245,6 +236,34 @@ const OrderDetails = () => {
                         <span>
                           Qty: <strong>{product.quantity}</strong>
                         </span>
+                      </div>
+
+                      {/* ITEM TIMELINE */}
+                      <div className={styles.itemTimelineWrapper}>
+                        <div className={styles.itemTimelineTitle}>
+                          Order Status
+                        </div>
+                        <div className={styles.itemTimeline}>
+                          {getItemTimeline(product.itemStatus).map((step) => (
+                            <div
+                              key={step.key}
+                              className={`${styles.itemTimelineStep}
+        ${step.completed ? styles.itemStepCompleted : ""}
+        ${step.current ? styles.itemStepCurrent : ""}`}
+                            >
+                              <div className={styles.itemTimelineDot}>
+                                {step.completed ? (
+                                  <MdCheckCircle size={14} />
+                                ) : (
+                                  <MdAccessTime size={14} />
+                                )}
+                              </div>
+                              <div className={styles.itemTimelineLabel}>
+                                {step.label}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className={styles.productPricing}>
@@ -293,38 +312,6 @@ const OrderDetails = () => {
                   <span>Order Total</span>
                   <span>₹{orderData.totalAmount}</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Order Timeline */}
-            <div className={styles.card}>
-              <h2 className={styles.cardTitle}>Order Timeline</h2>
-              <div className={styles.timeline}>
-                {timeline.map((step, index) => (
-                  <div key={index} className={styles.timelineItem}>
-                    <div
-                      className={`${styles.timelineDot} ${
-                        step.completed ? styles.timelineDotCompleted : ""
-                      }`}
-                    >
-                      {step.completed ? (
-                        <MdCheckCircle size={20} />
-                      ) : (
-                        <MdAccessTime size={20} />
-                      )}
-                    </div>
-                    <div className={styles.timelineContent}>
-                      <div className={styles.timelineStatus}>{step.status}</div>
-                    </div>
-                    {index < timeline.length - 1 && (
-                      <div
-                        className={`${styles.timelineLine} ${
-                          step.completed ? styles.timelineLineCompleted : ""
-                        }`}
-                      ></div>
-                    )}
-                  </div>
-                ))}
               </div>
             </div>
           </div>

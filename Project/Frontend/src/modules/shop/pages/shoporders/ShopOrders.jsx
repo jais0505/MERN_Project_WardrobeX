@@ -1,279 +1,325 @@
-import React, { useState } from 'react';
-import { FiSearch, FiPackage, FiTruck, FiCheckCircle, FiCalendar, FiUser, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
-import { MdPendingActions } from 'react-icons/md';
-import { AiOutlineInbox } from 'react-icons/ai';
-import styles from './ShopOrders.module.css';
-import { useNavigate } from 'react-router';
+import React, { useEffect, useState } from "react";
+import {
+  FiPackage,
+  FiCalendar,
+  FiMapPin,
+  FiArrowRight,
+  FiBox,
+  FiTruck,
+  FiCheckCircle,
+  FiSearch,
+  FiFilter,
+} from "react-icons/fi";
+import { MdPendingActions } from "react-icons/md";
+import styles from "./ShopOrders.module.css";
+import { useNavigate } from "react-router";
+import axios from "axios";
 
 const ShopOrders = () => {
-      const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const navigate = useNavigate();
 
-  // Sample orders data
-  const ordersData = [
-    {
-      id: 'ORD-2847',
-      date: '2024-12-14',
-      customerName: 'Rajesh Kumar',
-      totalAmount: 8999,
-      orderStatus: 'delivered',
-      paymentStatus: 'paid',
-      itemsCount: 3
-    },
-    {
-      id: 'ORD-2846',
-      date: '2024-12-14',
-      customerName: 'Amit Sharma',
-      totalAmount: 5499,
-      orderStatus: 'shipped',
-      paymentStatus: 'paid',
-      itemsCount: 2
-    },
-    {
-      id: 'ORD-2845',
-      date: '2024-12-13',
-      customerName: 'Vikram Singh',
-      totalAmount: 12999,
-      orderStatus: 'processing',
-      paymentStatus: 'paid',
-      itemsCount: 5
-    },
-    {
-      id: 'ORD-2844',
-      date: '2024-12-13',
-      customerName: 'Arjun Reddy',
-      totalAmount: 3299,
-      orderStatus: 'payment_success',
-      paymentStatus: 'paid',
-      itemsCount: 1
-    },
-    {
-      id: 'ORD-2843',
-      date: '2024-12-12',
-      customerName: 'Karthik Iyer',
-      totalAmount: 15999,
-      orderStatus: 'delivered',
-      paymentStatus: 'paid',
-      itemsCount: 4
-    },
-    {
-      id: 'ORD-2842',
-      date: '2024-12-12',
-      customerName: 'Rohit Mehta',
-      totalAmount: 7499,
-      orderStatus: 'shipped',
-      paymentStatus: 'paid',
-      itemsCount: 2
-    },
-    {
-      id: 'ORD-2841',
-      date: '2024-12-11',
-      customerName: 'Suresh Patel',
-      totalAmount: 9999,
-      orderStatus: 'processing',
-      paymentStatus: 'paid',
-      itemsCount: 3
-    },
-    {
-      id: 'ORD-2840',
-      date: '2024-12-11',
-      customerName: 'Deepak Verma',
-      totalAmount: 4599,
-      orderStatus: 'payment_success',
-      paymentStatus: 'paid',
-      itemsCount: 1
-    }
-  ];
+  const shopId = sessionStorage.getItem("sid");
+  console.log("ShopId:", shopId);
+
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [orderItemsData, setOrderItemsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchShopOrders = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/OrderItemFetch/${shopId}`
+        );
+
+        setOrderItemsData(res.data.shopOrderItems);
+      } catch (err) {
+        console.error("Failed to fetch shop orders", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (shopId) fetchShopOrders();
+  }, [shopId]);
 
   const statusConfig = {
-    payment_success: { label: 'Payment Success', color: '#10b981' },
-    processing: { label: 'Processing', color: '#f59e0b' },
-    shipped: { label: 'Shipped', color: '#3b82f6' },
-    delivered: { label: 'Delivered', color: '#8b5cf6' }
+    processing: {
+      label: "Processing",
+      color: "#f59e0b",
+      icon: MdPendingActions,
+    },
+    packed: {
+      label: "Packed",
+      color: "#3b82f6",
+      icon: FiBox,
+    },
+    shipped: {
+      label: "Shipped",
+      color: "#8b5cf6",
+      icon: FiTruck,
+    },
+    outForDelivery: {
+      label: "Out for Delivery",
+      color: "#0ea5e9",
+      icon: FiTruck,
+    },
+    delivered: {
+      label: "Delivered",
+      color: "#10b981",
+      icon: FiCheckCircle,
+    },
   };
 
-  // Filter orders
-  const filteredOrders = ordersData.filter(order => {
-    const matchesSearch = 
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || order.orderStatus === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+  // Filter items
+  const filteredItems = orderItemsData.filter((item) => {
+    const matchesStatus =
+      statusFilter === "all" || item.orderItemStatus === statusFilter;
+    return matchesStatus;
   });
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const formatAmount = (amount) => {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
   // Calculate stats
-  const totalOrders = ordersData.length;
-  const deliveredOrders = ordersData.filter(o => o.orderStatus === 'delivered').length;
-  const processingOrders = ordersData.filter(o => o.orderStatus === 'processing').length;
-  const shippedOrders = ordersData.filter(o => o.orderStatus === 'shipped').length;
+  const totalItems = orderItemsData.length;
+  const processingItems = orderItemsData.filter(
+    (i) => i.orderItemStatus === "processing"
+  ).length;
+  const packedItems = orderItemsData.filter(
+    (i) => i.orderItemStatus === "packed"
+  ).length;
+  const shippedItems = orderItemsData.filter(
+    (i) => i.orderItemStatus === "shipped"
+  ).length;
+  const deliveredItems = orderItemsData.filter(
+    (i) => i.orderItemStatus === "delivered"
+  ).length;
+
+  const stats = [
+    {
+      label: "Total Items",
+      value: totalItems,
+      icon: FiPackage,
+      color: "#000000",
+    },
+    {
+      label: "Processing",
+      value: processingItems,
+      icon: MdPendingActions,
+      color: "#f59e0b",
+    },
+    { label: "Packed", value: packedItems, icon: FiBox, color: "#3b82f6" },
+    { label: "Shipped", value: shippedItems, icon: FiTruck, color: "#8b5cf6" },
+    {
+      label: "Delivered",
+      value: deliveredItems,
+      icon: FiCheckCircle,
+      color: "#10b981",
+    },
+  ];
+
+  if (loading) {
+    return <div className={styles.loading}>Loading orders...</div>;
+  }
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Shop Orders</h1>
-          <p className={styles.subtitle}>Manage and track all your orders</p>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <FiPackage size={28} />
-          </div>
-          <div className={styles.statInfo}>
-            <p className={styles.statLabel}>Total Orders</p>
-            <h3 className={styles.statValue}>{totalOrders}</h3>
-          </div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <MdPendingActions size={28} />
-          </div>
-          <div className={styles.statInfo}>
-            <p className={styles.statLabel}>Processing</p>
-            <h3 className={styles.statValue}>{processingOrders}</h3>
-          </div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <FiTruck size={28} />
-          </div>
-          <div className={styles.statInfo}>
-            <p className={styles.statLabel}>Shipped</p>
-            <h3 className={styles.statValue}>{shippedOrders}</h3>
-          </div>
-        </div>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon}>
-            <FiCheckCircle size={28} />
-          </div>
-          <div className={styles.statInfo}>
-            <p className={styles.statLabel}>Delivered</p>
-            <h3 className={styles.statValue}>{deliveredOrders}</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className={styles.filterBar}>
-        <div className={styles.searchBox}>
-          <FiSearch className={styles.searchIcon} size={20} />
-          <input
-            type="text"
-            placeholder="Search by Order ID or Customer name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className={styles.filterSelect}
-        >
-          <option value="all">All Status</option>
-          <option value="payment_success">Payment Success</option>
-          <option value="processing">Processing</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-        </select>
-      </div>
-
-      {/* Orders List */}
-      <div className={styles.ordersContainer}>
-        {filteredOrders.length === 0 ? (
-          <div className={styles.emptyState}>
-            <AiOutlineInbox className={styles.emptyIcon} size={80} />
-            <h3 className={styles.emptyTitle}>No orders found</h3>
-            <p className={styles.emptyText}>
-              {searchQuery || statusFilter !== 'all' 
-                ? 'Try adjusting your filters' 
-                : 'Orders will appear here once customers place them'}
+      {/* Hero Header */}
+      <div className={styles.heroHeader}>
+        <div className={styles.heroContent}>
+          <div className={styles.heroText}>
+            <h1 className={styles.heroTitle}>Fulfillment Center</h1>
+            <p className={styles.heroSubtitle}>
+              Manage and process your order items efficiently
             </p>
           </div>
+          <div className={styles.heroStats}>
+            <div className={styles.heroStat}>
+              <span className={styles.heroStatNumber}>
+                {processingItems + packedItems}
+              </span>
+              <span className={styles.heroStatLabel}>Pending Action</span>
+            </div>
+            <div className={styles.heroDivider}></div>
+            <div className={styles.heroStat}>
+              <span className={styles.heroStatNumber}>{totalItems}</span>
+              <span className={styles.heroStatLabel}>Total Items</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Overview */}
+      <div className={styles.statsContainer}>
+        {stats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <div
+              key={index}
+              className={styles.statCard}
+              style={{ borderTopColor: stat.color }}
+            >
+              <div
+                className={styles.statIconWrapper}
+                style={{ backgroundColor: `${stat.color}10` }}
+              >
+                <IconComponent size={24} style={{ color: stat.color }} />
+              </div>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>{stat.value}</span>
+                <span className={styles.statLabel}>{stat.label}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Filters Section */}
+      <div className={styles.filtersSection}>
+        <div className={styles.statusFilters}>
+          <div className={styles.filterLabel}>
+            <FiFilter size={16} />
+            <span>Status:</span>
+          </div>
+          {[
+            { value: "all", label: "All Items" },
+            { value: "processing", label: "Processing" },
+            { value: "packed", label: "Packed" },
+            { value: "shipped", label: "Shipped" },
+            { value: "outForDelivery", label: "Out for Delivery" },
+            { value: "delivered", label: "Delivered" },
+          ].map((filter) => (
+            <button
+              key={filter.value}
+              className={`${styles.filterChip} ${
+                statusFilter === filter.value ? styles.filterChipActive : ""
+              }`}
+              onClick={() => setStatusFilter(filter.value)}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Items List */}
+      <div className={styles.itemsSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Order Items</h2>
+          <span className={styles.itemCount}>{filteredItems.length} items</span>
+        </div>
+
+        {filteredItems.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIconWrapper}>
+              <FiPackage size={64} />
+            </div>
+            <h3 className={styles.emptyTitle}>No Items Found</h3>
+          </div>
         ) : (
-          <div className={styles.ordersList}>
-            {filteredOrders.map((order) => (
-              <div key={order.id} className={styles.orderCard}>
-                <div className={styles.orderHeader}>
-                  <div className={styles.orderIdSection}>
-                    <span className={styles.orderIdLabel}>Order ID</span>
-                    <span className={styles.orderId}>{order.id}</span>
-                  </div>
-                  <div className={styles.orderDate}>
-                    <FiCalendar size={16} />
-                    {formatDate(order.date)}
-                  </div>
-                </div>
+          <div className={styles.itemsList}>
+            {filteredItems.map((item) => {
+              const StatusIcon = statusConfig[item.orderItemStatus].icon;
+              return (
+                <div key={item.orderItemId} className={styles.itemRow}>
+                  <div className={styles.itemMainContent}>
+                    {/* Product Image & Info */}
+                    <div className={styles.productSection}>
+                      <div className={styles.productImageWrapper}>
+                        <img
+                          src={`http://localhost:5000/images/${item.productImage}`}
+                          alt={item.productName}
+                          className={styles.productImage}
+                        />
+                      </div>
+                      <div className={styles.productInfo}>
+                        <h3 className={styles.productName}>
+                          {item.productName}
+                        </h3>
+                        <div className={styles.productMeta}>
+                          <span className={styles.metaItem}>
+                            Size: <strong>{item.sizeName}</strong>
+                          </span>
+                          <span className={styles.metaDivider}>•</span>
+                          <span className={styles.metaItem}>
+                            Color: <strong>{item.colorName}</strong>
+                          </span>
+                          <span className={styles.metaDivider}>•</span>
+                          <span className={styles.metaItem}>
+                            Qty: <strong>{item.quantity}</strong>
+                          </span>
+                        </div>
+                        <div className={styles.productPrice}>
+                          <span className={styles.priceCalc}>
+                            {formatAmount(item.price)} × {item.quantity}
+                          </span>
+                          <span className={styles.priceTotal}>
+                            {formatAmount(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className={styles.orderBody}>
-                  <div className={styles.orderInfo}>
-                    <div className={styles.infoGroup}>
-                      <span className={styles.infoLabel}>
-                        <FiUser size={14} /> Customer
-                      </span>
-                      <span className={styles.infoValue}>{order.customerName}</span>
+                    {/* Order Details */}
+                    <div className={styles.orderDetails}>
+                      <div className={styles.detailItem}>
+                        <FiCalendar size={16} className={styles.detailIcon} />
+                        <span className={styles.detailText}>
+                          {formatDate(item.orderDate)}
+                        </span>
+                      </div>
+                      <div className={styles.detailItem}>
+                        <FiMapPin size={16} className={styles.detailIcon} />
+                        <span className={styles.detailText}>
+                          {item.deliveryAddress}
+                        </span>
+                      </div>
                     </div>
-                    <div className={styles.infoGroup}>
-                      <span className={styles.infoLabel}>
-                        <FiShoppingBag size={14} /> Items
-                      </span>
-                      <span className={styles.infoValue}>{order.itemsCount} items</span>
-                    </div>
-                    <div className={styles.infoGroup}>
-                      <span className={styles.infoLabel}>Total Amount</span>
-                      <span className={styles.infoValueAmount}>{formatAmount(order.totalAmount)}</span>
-                    </div>
-                  </div>
 
-                  <div className={styles.orderStatus}>
-                    <div className={styles.statusGroup}>
-                      <span className={styles.statusLabel}>Order Status</span>
-                      <span 
+                    {/* Status Badge */}
+                    <div className={styles.statusSection}>
+                      <div
                         className={styles.statusBadge}
-                        style={{ 
-                          backgroundColor: `${statusConfig[order.orderStatus].color}15`,
-                          color: statusConfig[order.orderStatus].color 
+                        style={{
+                          backgroundColor: `${
+                            statusConfig[item.orderItemStatus].color
+                          }15`,
+                          color: statusConfig[item.orderItemStatus].color,
+                          borderColor: statusConfig[item.orderItemStatus].color,
                         }}
                       >
-                        {statusConfig[order.orderStatus].label}
-                      </span>
+                        <StatusIcon size={16} />
+                        {statusConfig[item.orderItemStatus].label}
+                      </div>
                     </div>
-                    <div className={styles.statusGroup}>
-                      <span className={styles.statusLabel}>Payment</span>
-                      <span className={styles.paymentBadge}>
-                        <FiCheckCircle size={14} /> Paid
-                      </span>
+
+                    {/* Action Button */}
+                    <div className={styles.actionSection}>
+                      <button
+                        className={styles.actionButton}
+                        onClick={() =>
+                          navigate(`/shop/order-details/${item.orderItemId}`)
+                        }
+                      >
+                        <span>View & Update</span>
+                        <FiArrowRight size={18} />
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                <div className={styles.orderFooter}>
-                  <button className={styles.viewDetailsBtn} onClick={() => navigate("/shop/order-details")}>
-                    View Details <FiArrowRight size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -281,4 +327,4 @@ const ShopOrders = () => {
   );
 };
 
-export default ShopOrders
+export default ShopOrders;

@@ -91,14 +91,13 @@ const Navbar = () => {
           </div>
         </div>
 
-        <Link to="/user/wishlist" className={styles.nav_link}>
+        <Link to="/user/profilesettings/wishlist" className={styles.nav_link}>
           <FaRegHeart className={styles.wishlist_icon} />
         </Link>
 
         <div className={styles.cart_wrapper}>
           <Link to="/user/cart" className={styles.nav_link}>
             <BsCart3 className={styles.cart_icon} />
-            <div className={styles.nav_cart_count}>0</div>
           </Link>
         </div>
 
