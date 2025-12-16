@@ -1588,6 +1588,11 @@ const orderSchemaStruture = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  refundedAmount: {
+    type: Number,
+    default: 0,
+  },
+
   orderDate: {
     type: Date,
     default: Date.now,
@@ -1600,8 +1605,9 @@ const orderSchemaStruture = new mongoose.Schema({
       "buyNow",
       "paymentPending",
       "paymentSuccess",
+      "partiallyCancelled",
       "cancelled",
-      "refunded"
+      "refunded",
     ],
     default: "inCart",
   },
@@ -1795,94 +1801,94 @@ app.get("/order/user/:userId", async (req, res) => {
 });
 
 //OrderDetails data fetch
-  app.get("/order/details/:orderId", async (req, res) => {
-    try {
-      const { orderId } = req.params;
+app.get("/order/details/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
 
-      // 1️⃣ Fetch order
-      const order = await Order.findById(orderId);
+    // 1️⃣ Fetch order
+    const order = await Order.findById(orderId);
 
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-
-      // 2️⃣ Fetch order items with full population
-      const orderItems = await OrderItem.find({ orderId }).populate({
-        path: "variantSizeId",
-        populate: [
-          { path: "sizeId" },
-          {
-            path: "variantId",
-            populate: [
-              { path: "colorId" },
-              {
-                path: "productId",
-                populate: { path: "brandId" },
-              },
-            ],
-          },
-        ],
-      });
-
-      if (!orderItems.length) {
-        return res.status(200).json({
-          order,
-          items: [],
-        });
-      }
-
-      // 3️⃣ Fetch variant images
-      const variantIds = orderItems.map(
-        (item) => item.variantSizeId.variantId._id
-      );
-
-      const images = await Image.find({
-        variantId: { $in: variantIds },
-      });
-
-      const imageMap = {};
-      images.forEach((img) => {
-        imageMap[img.variantId.toString()] = img.productImage;
-      });
-
-      // 4️⃣ Build items response
-      const itemsResponse = orderItems.map((item) => {
-        const variant = item.variantSizeId.variantId;
-        const product = variant.productId;
-        const variantId = variant._id.toString();
-
-        return {
-          orderItemId: item._id,
-          productName: product.productName,
-          brandName: product.brandId.brandName,
-          productImage: imageMap[variantId] || product.productImage,
-          sizeName: item.variantSizeId.sizeId.sizeName,
-          colorName: variant.colorId.colorName,
-          quantity: item.quantity,
-          price: item.orderItemPrice,
-          itemStatus: item.orderItemStatus,
-        };
-      });
-
-      // 5️⃣ Final response
-      return res.status(200).json({
-        order: {
-          orderId: order._id,
-          orderDate: order.orderDate,
-          orderStatus: order.orderStatus,
-          totalAmount: order.totalAmount,
-          deliveryAddress: order.deliveryAddress,
-          userName: order.userName,
-          contactNo: order.contactNo,
-          razorpayPaymentId: order.razorpayPaymentId,
-        },
-        items: itemsResponse,
-      });
-    } catch (error) {
-      console.error("Error fetching order details:", error);
-      return res.status(500).json({ message: "Internal server error" });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
-  });
+
+    // 2️⃣ Fetch order items with full population
+    const orderItems = await OrderItem.find({ orderId }).populate({
+      path: "variantSizeId",
+      populate: [
+        { path: "sizeId" },
+        {
+          path: "variantId",
+          populate: [
+            { path: "colorId" },
+            {
+              path: "productId",
+              populate: { path: "brandId" },
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!orderItems.length) {
+      return res.status(200).json({
+        order,
+        items: [],
+      });
+    }
+
+    // 3️⃣ Fetch variant images
+    const variantIds = orderItems.map(
+      (item) => item.variantSizeId.variantId._id
+    );
+
+    const images = await Image.find({
+      variantId: { $in: variantIds },
+    });
+
+    const imageMap = {};
+    images.forEach((img) => {
+      imageMap[img.variantId.toString()] = img.productImage;
+    });
+
+    // 4️⃣ Build items response
+    const itemsResponse = orderItems.map((item) => {
+      const variant = item.variantSizeId.variantId;
+      const product = variant.productId;
+      const variantId = variant._id.toString();
+
+      return {
+        orderItemId: item._id,
+        productName: product.productName,
+        brandName: product.brandId.brandName,
+        productImage: imageMap[variantId] || product.productImage,
+        sizeName: item.variantSizeId.sizeId.sizeName,
+        colorName: variant.colorId.colorName,
+        quantity: item.quantity,
+        price: item.orderItemPrice,
+        itemStatus: item.orderItemStatus,
+      };
+    });
+
+    // 5️⃣ Final response
+    return res.status(200).json({
+      order: {
+        orderId: order._id,
+        orderDate: order.orderDate,
+        orderStatus: order.orderStatus,
+        totalAmount: order.totalAmount,
+        deliveryAddress: order.deliveryAddress,
+        userName: order.userName,
+        contactNo: order.contactNo,
+        razorpayPaymentId: order.razorpayPaymentId,
+      },
+      items: itemsResponse,
+    });
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
@@ -1896,7 +1902,7 @@ const orderItemSchemaStructure = new mongoose.Schema({
     required: true,
   },
   orderItemPrice: {
-    type: String,
+    type: Number,
     required: true,
   },
   quantity: {
@@ -1906,8 +1912,28 @@ const orderItemSchemaStructure = new mongoose.Schema({
   },
   orderItemStatus: {
     type: String,
-    enum: ["processing", "packed", "shipped", "outForDelivery", "delivered"],
+    enum: [
+      "processing",
+      "packed",
+      "shipped",
+      "outForDelivery",
+      "delivered",
+      "cancelled",
+    ],
     default: "processing",
+  },
+  cancellationReason: {
+    type: String,
+    default: null,
+  },
+  cancelledAt: {
+    type: Date,
+    default: null,
+  },
+  refundStatus: {
+    type: String,
+    enum: ["notInitiated", "initiated", "approved", "completed"],
+    default: "notInitiated",
   },
 });
 
@@ -2358,7 +2384,7 @@ app.get("/order-item/:orderItemId", async (req, res) => {
     }
 
     res.status(200).json(result[0]);
-  } catch (err) { 
+  } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
@@ -2399,13 +2425,69 @@ app.patch("/order-item/status/:orderItemId", async (req, res) => {
   }
 });
 
+//orderItem cancellation
+app.patch("/order-item/:orderItemId/cancel", async (req, res) => {
+  try {
+    const { orderItemId } = req.params;
+    const { reason } = req.body;
 
+    const orderItem = await OrderItem.findById(orderItemId);
+    if (!orderItem) {
+      return res.status(404).json({ message: "Order item not found" });
+    }
 
+    // ❌ Block if already shipped
+    if (
+      ["shipped", "outForDelivery", "delivered"].includes(
+        orderItem.orderItemStatus
+      )
+    ) {
+      return res.status(400).json({
+        message: "This item can no longer be cancelled",
+      });
+    }
 
+    if (orderItem.orderItemStatus === "cancelled") {
+      return res.status(400).json({
+        message: "Item already cancelled",
+      });
+    }
 
+    // ✅ Cancel item
+    orderItem.orderItemStatus = "cancelled";
+    orderItem.cancellationReason = reason;
+    orderItem.cancelledAt = new Date();
+    orderItem.refundStatus = "initiated";
+    await orderItem.save();
 
+    // 🔄 Update Order
+    const order = await Order.findById(orderItem.orderId);
 
+    const refundAmount = orderItem.orderItemPrice * orderItem.quantity;
 
+    order.refundedAmount += refundAmount;
+
+    // Check remaining active items
+    const activeItems = await OrderItem.find({
+      orderId: order._id,
+      orderItemStatus: { $ne: "cancelled" },
+    });
+
+    order.orderStatus =
+      activeItems.length === 0 ? "cancelled" : "partiallyCancelled";
+
+    await order.save();
+
+    res.json({
+      message: "Order item cancelled successfully",
+      refundAmount,
+      refundEta: "5 business days",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Cancellation failed" });
+  }
+});
 
 const wishListSchemaStructure = new mongoose.Schema({
   productId: {

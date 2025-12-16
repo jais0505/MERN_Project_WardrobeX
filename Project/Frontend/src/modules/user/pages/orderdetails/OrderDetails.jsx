@@ -9,12 +9,20 @@ import {
 import styles from "./OrderDetails.module.css";
 import { useNavigate, useParams } from "react-router";
 import axios from "axios";
+import CancelOrderModal from "../cancelordermodal/CancelOrderModal";
+import { toast } from "react-toastify";
 
 const OrderDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [cancelModal, setCancelModal] = useState({
+    isOpen: false,
+    orderItemId: null,
+    productName: "",
+  });
 
   useEffect(() => {
     fetchOrderDetails();
@@ -81,12 +89,6 @@ const OrderDetails = () => {
     return `${id.slice(0, 8)}...${id.slice(-8)}`;
   };
 
-  // const handleDownloadInvoice = () => {
-  //   // Implement invoice download
-  //   console.log("Download invoice for:", orderId);
-  //   alert("Invoice download feature - integrate with your backend");
-  // };
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -103,7 +105,7 @@ const OrderDetails = () => {
     );
   }
 
-  const ITEM_STAGES = [
+  const BASE_ITEM_STAGES = [
     { key: "processing", label: "Processing" },
     { key: "packed", label: "Packed" },
     { key: "shipped", label: "Shipped" },
@@ -114,26 +116,85 @@ const OrderDetails = () => {
   const getItemTimeline = (itemStatus) => {
     if (!itemStatus) return [];
 
-    const currentIndex = ITEM_STAGES.findIndex(
+    // CASE 1: Cancelled item
+    if (itemStatus === "cancelled") {
+      const cancelIndex = BASE_ITEM_STAGES.findIndex(
+        (stage) => stage.key === "processing"
+      );
+
+      console.info("CancelIndex:", cancelIndex);
+
+      return [
+        {
+          key: "processing",
+          label: "Processing",
+          completed: true,
+          current: false,
+          isFinal: false,
+        },
+        {
+          key: "cancelled",
+          label: "Cancelled",
+          completed: true,
+          current: true,
+          isFinal: true,
+        },
+      ];
+    }
+
+    // CASE 2: Normal flow
+    const currentIndex = BASE_ITEM_STAGES.findIndex(
       (stage) => stage.key === itemStatus
     );
 
-    return ITEM_STAGES.map((stage, index) => ({
+    return BASE_ITEM_STAGES.map((stage, index) => ({
       ...stage,
       completed: index < currentIndex,
       current: index === currentIndex,
+      isFinal: stage.key === "delivered" && itemStatus === "delivered",
     }));
   };
 
-  const STATUS_LABELS = {
-    processing: "Processing",
-    packed: "Packed",
-    shipped: "Shipped",
-    outForDelivery: "Out for Delivery",
-    delivered: "Delivered",
+  const handleCancelClick = (orderItemId, productName) => {
+    setCancelModal({
+      isOpen: true,
+      orderItemId,
+      productName,
+    });
   };
 
+  const handleCloseCancelModal = () => {
+    setCancelModal({
+      isOpen: false,
+      orderItemId: null,
+      productName: "",
+    });
+  };
 
+  const handleConfirmCancel = async (orderItemId, reason) => {
+    try {
+      const res =await axios.patch(
+        `http://127.0.0.1:5000/order-item/${orderItemId}/cancel`,
+        { reason }
+      );
+
+      const { refundAmount, refundEta } = res.data;
+
+      toast.info(
+        `Item cancelled successfully. ₹${refundAmount} will be refunded to your original payment method within ${refundEta}.`,
+        {
+          autoClose: 5000,
+        }
+      );
+      handleCloseCancelModal();
+
+      await fetchOrderDetails();
+    } catch (error) {
+      toast.error("Cancellation failed");
+      console.error("Cancel failed:", error);
+      alert(error.response?.data?.message || "Unable to cancel item");
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -161,17 +222,6 @@ const OrderDetails = () => {
                 </span>
               </div>
             </div>
-            {/* <div className={styles.headerRight}>
-              <div
-                className={`${styles.statusBadge} ${getStatusColor(
-                  orderData.orderStatus
-                )}`}
-              >
-                {orderData.orderStatus === "paymentSuccess"
-                  ? "Order Placed"
-                  : orderData.orderStatus}
-              </div>
-            </div> */}
           </div>
 
           <div className={styles.headerBottom}>
@@ -193,13 +243,6 @@ const OrderDetails = () => {
                 </div>
               </div>
             </div>
-            {/* <button
-              className={styles.downloadBtn}
-              onClick={handleDownloadInvoice}
-            >
-              <MdDownload size={18} />
-              Download Invoice
-            </button> */}
           </div>
         </div>
 
@@ -252,12 +295,13 @@ const OrderDetails = () => {
         ${step.current ? styles.itemStepCurrent : ""}`}
                             >
                               <div className={styles.itemTimelineDot}>
-                                {step.completed ? (
+                                {step.completed || step.isFinal ? (
                                   <MdCheckCircle size={14} />
                                 ) : (
                                   <MdAccessTime size={14} />
                                 )}
                               </div>
+
                               <div className={styles.itemTimelineLabel}>
                                 {step.label}
                               </div>
@@ -272,6 +316,29 @@ const OrderDetails = () => {
                         <div className={styles.itemTotal}>
                           Total: ₹{product.price * product.quantity}
                         </div>
+                      )}
+
+                      {product.itemStatus === "cancelled" && (
+                        <span className={styles.cancelledBadge}>Cancelled</span>
+                      )}
+
+                      {![
+                        "cancelled",
+                        "shipped",
+                        "outForDelivery",
+                        "delivered",
+                      ].includes(product.itemStatus) && (
+                        <button
+                          className={styles.cancelItemBtn}
+                          onClick={() =>
+                            handleCancelClick(
+                              product.orderItemId,
+                              product.productName
+                            )
+                          }
+                        >
+                          Cancel Item
+                        </button>
                       )}
                     </div>
                   </div>
@@ -384,6 +451,14 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
+      {/* Cancel Modal */}
+      <CancelOrderModal
+        isOpen={cancelModal.isOpen}
+        onClose={handleCloseCancelModal}
+        onConfirm={handleConfirmCancel}
+        orderItemId={cancelModal.orderItemId}
+        productName={cancelModal.productName}
+      />
     </div>
   );
 };

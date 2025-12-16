@@ -37,22 +37,22 @@ const MyOrders = () => {
     refunded: "Refunded",
   };
 
-  const getDeliveryLabel = (status) => {
-    if (!status) return "Processing";
+  // const getDeliveryLabel = (status) => {
+  //   if (!status) return "Processing";
 
-    switch (status.toLowerCase()) {
-      case "packed":
-        return "Packed";
-      case "shipped":
-        return "Shipped";
-      case "out for delivery":
-        return "Out for Delivery";
-      case "delivered":
-        return "Delivered";
-      default:
-        return "Processing";
-    }
-  };
+  //   switch (status.toLowerCase()) {
+  //     case "packed":
+  //       return "Packed";
+  //     case "shipped":
+  //       return "Shipped";
+  //     case "out for delivery":
+  //       return "Out for Delivery";
+  //     case "delivered":
+  //       return "Delivered";
+  //     default:
+  //       return "Processing";
+  //   }
+  // };
 
   const shortenOrderId = (orderId) => {
     if (!orderId || orderId.length < 10) return orderId;
@@ -142,9 +142,9 @@ const MyOrders = () => {
                       {ORDER_STATUS_LABELS[order.orderStatus]}
                     </span>
 
-                    <span className={styles.deliveryStatus}>
+                    {/* <span className={styles.deliveryStatus}>
                       {getDeliveryLabel(order.previewItem?.itemStatus)}
-                    </span>
+                    </span> */}
                   </div>
                 </div>
 
