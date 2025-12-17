@@ -663,3 +663,32 @@
     flex-direction: column;
   }
 }
+
+
+
+.timelineStepCancelled {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.timelineMarkerCancelled {
+  background-color: #ef444415;
+  color: #ef4444;
+  border-radius: 50%;
+  padding: 6px;
+}
+
+.timelineLabelCancelled {
+  color: #ef4444;
+}
+
+.cancelledConnector {
+  height: 24px;
+  width: 2px;
+  background-color: #ef4444;
+  margin-left: 11px;
+  opacity: 0.4;
+}

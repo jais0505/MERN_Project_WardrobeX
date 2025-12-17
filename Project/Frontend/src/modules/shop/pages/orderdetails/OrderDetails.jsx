@@ -49,8 +49,11 @@ const OrderDetails = () => {
     { key: "delivered", label: "Delivered" },
   ];
 
+  const isCancelled = orderItem?.orderItemStatus === "cancelled";
+
   const getCurrentStageIndex = () => {
     if (!orderItem) return -1;
+    if (orderItem.orderItemStatus === "cancelled") return -1;
     return timelineStages.findIndex(
       (stage) => stage.key === orderItem.orderItemStatus
     );
@@ -76,13 +79,13 @@ const OrderDetails = () => {
         { status: nextAction.key }
       );
 
-        setOrderItem((prev) => ({
-      ...prev,
-      orderItemStatus: nextAction.key,
-    }));
+      setOrderItem((prev) => ({
+        ...prev,
+        orderItemStatus: nextAction.key,
+      }));
 
-    // ✅ Success toast
-    toast.success(`Order marked as ${nextAction.label}`);
+      // ✅ Success toast
+      toast.success(`Order marked as ${nextAction.label}`);
     } catch (err) {
       console.error("Status update failed", err);
     } finally {
@@ -108,7 +111,10 @@ const OrderDetails = () => {
       <div className={styles.errorContainer}>
         <FiPackage size={64} />
         <h2>Order Not Found</h2>
-        <button onClick={() => navigate("/shop/orders")} className={styles.errorBtn}>
+        <button
+          onClick={() => navigate("/shop/orders")}
+          className={styles.errorBtn}
+        >
           Back to Orders
         </button>
       </div>
@@ -117,6 +123,26 @@ const OrderDetails = () => {
 
   const currentStageIndex = getCurrentStageIndex();
   const nextAction = getNextAction();
+
+  const CancelledTimeline = () => (
+    <div className={styles.cancelledTimeline}>
+      <div className={styles.timelineStepCompleted}>
+        <div className={styles.timelineMarker}>
+          <MdCheckCircle size={22} />
+        </div>
+        <div className={styles.timelineLabel}>Processing</div>
+      </div>
+
+      <div className={styles.cancelledConnector}></div>
+
+      <div className={styles.timelineStepCancelled}>
+        <div className={styles.timelineMarkerCancelled}>
+          <MdCheckCircle size={22} />
+        </div>
+        <div className={styles.timelineLabelCancelled}>Cancelled</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles.container}>
@@ -129,28 +155,34 @@ const OrderDetails = () => {
           <FiArrowLeft size={20} />
           <span>Back to Orders</span>
         </button>
-        
+
         <div className={styles.headerContent}>
           <div className={styles.headerLeft}>
             <h1 className={styles.pageTitle}>Order Item Details</h1>
-            <span className={styles.orderItemId}>#{orderItem._id.slice(-8).toUpperCase()}</span>
+            <span className={styles.orderItemId}>
+              #{orderItem._id.slice(-8).toUpperCase()}
+            </span>
           </div>
           <div className={styles.headerRight}>
             <span
               className={styles.statusBadge}
               style={{
-                backgroundColor:
-                  currentStageIndex === timelineStages.length - 1
-                    ? "#10b98115"
-                    : "#f59e0b15",
-                color:
-                  currentStageIndex === timelineStages.length - 1
-                    ? "#10b981"
-                    : "#f59e0b",
+                backgroundColor: isCancelled
+                  ? "#ef444415"
+                  : currentStageIndex === timelineStages.length - 1
+                  ? "#10b98115"
+                  : "#f59e0b15",
+                color: isCancelled
+                  ? "#ef4444"
+                  : currentStageIndex === timelineStages.length - 1
+                  ? "#10b981"
+                  : "#f59e0b",
               }}
             >
               <span className={styles.statusDot}></span>
-              {timelineStages[currentStageIndex]?.label}
+              {isCancelled
+                ? "Cancelled"
+                : timelineStages[currentStageIndex]?.label}
             </span>
           </div>
         </div>
@@ -170,15 +202,19 @@ const OrderDetails = () => {
             </div>
             <div className={styles.productDetails}>
               <h2 className={styles.productName}>{orderItem.productName}</h2>
-              
+
               <div className={styles.productVariants}>
                 <div className={styles.variantChip}>
                   <span className={styles.variantLabel}>Color</span>
-                  <span className={styles.variantValue}>{orderItem.colorName}</span>
+                  <span className={styles.variantValue}>
+                    {orderItem.colorName}
+                  </span>
                 </div>
                 <div className={styles.variantChip}>
                   <span className={styles.variantLabel}>Size</span>
-                  <span className={styles.variantValue}>{orderItem.sizeName}</span>
+                  <span className={styles.variantValue}>
+                    {orderItem.sizeName}
+                  </span>
                 </div>
               </div>
 
@@ -187,14 +223,18 @@ const OrderDetails = () => {
                   <FiPackage size={24} className={styles.metricIcon} />
                   <div className={styles.metricContent}>
                     <span className={styles.metricLabel}>Quantity</span>
-                    <span className={styles.metricValue}>{orderItem.quantity}</span>
+                    <span className={styles.metricValue}>
+                      {orderItem.quantity}
+                    </span>
                   </div>
                 </div>
                 <div className={styles.metricBox}>
                   <FiCreditCard size={24} className={styles.metricIcon} />
                   <div className={styles.metricContent}>
                     <span className={styles.metricLabel}>Item Price</span>
-                    <span className={styles.metricValue}>{formatAmount(orderItem.price)}</span>
+                    <span className={styles.metricValue}>
+                      {formatAmount(orderItem.price)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -210,37 +250,47 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className={styles.cardContent}>
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIconWrapper}>
-                    <FiUser size={18} />
-                  </div>
-                  <div className={styles.infoContent}>
-                    <span className={styles.infoLabel}>Customer Name</span>
-                    <span className={styles.infoValue}>{orderItem.userName}</span>
-                  </div>
+              {isCancelled ? (
+                <div className={styles.cancelledTimeline}>
+                  <MdCheckCircle size={28} className={styles.cancelledIcon} />
+                  <h4 className={styles.cancelledTitle}>Order Cancelled</h4>
+                  <p className={styles.cancelledReason}>
+                    Reason: {orderItem.cancellationReason || "Not provided"}
+                  </p>
+                  <p className={styles.refundInfo}>
+                    Refund of ₹{orderItem.price * orderItem.quantity} initiated.
+                    <br />
+                    Expected within 5 business days.
+                  </p>
                 </div>
-                
-                <div className={styles.infoItem}>
-                  <div className={styles.infoIconWrapper}>
-                    <FiPhone size={18} />
-                  </div>
-                  <div className={styles.infoContent}>
-                    <span className={styles.infoLabel}>Contact Number</span>
-                    <span className={styles.infoValue}>{orderItem.contactNo}</span>
-                  </div>
+              ) : (
+                <div className={styles.timeline}>
+                  {timelineStages.map((stage, index) => {
+                    const isCompleted = index <= currentStageIndex;
+                    const isCurrent = index === currentStageIndex;
+
+                    return (
+                      <div
+                        key={stage.key}
+                        className={`${styles.timelineStep}
+              ${isCompleted ? styles.timelineStepCompleted : ""}
+              ${isCurrent ? styles.timelineStepCurrent : ""}`}
+                      >
+                        <div className={styles.timelineMarker}>
+                          {isCompleted ? (
+                            <MdCheckCircle size={20} />
+                          ) : (
+                            <div className={styles.timelineDotEmpty}></div>
+                          )}
+                        </div>
+                        <div className={styles.timelineLabel}>
+                          {stage.label}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                
-                <div className={`${styles.infoItem} ${styles.infoItemFull}`}>
-                  <div className={styles.infoIconWrapper}>
-                    <FiMapPin size={18} />
-                  </div>
-                  <div className={styles.infoContent}>
-                    <span className={styles.infoLabel}>Delivery Address</span>
-                    <span className={styles.infoValueAddress}>{orderItem.deliveryAddress}</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -281,30 +331,36 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className={styles.cardContent}>
-              <div className={styles.timeline}>
-                {timelineStages.map((stage, index) => {
-                  const isCompleted = index <= currentStageIndex;
-                  const isCurrent = index === currentStageIndex;
+              {isCancelled ? (
+                <CancelledTimeline />
+              ) : (
+                <div className={styles.timeline}>
+                  {timelineStages.map((stage, index) => {
+                    const isCompleted = index <= currentStageIndex;
+                    const isCurrent = index === currentStageIndex;
 
-                  return (
-                    <div
-                      key={stage.key}
-                      className={`${styles.timelineStep} ${
-                        isCompleted ? styles.timelineStepCompleted : ""
-                      } ${isCurrent ? styles.timelineStepCurrent : ""}`}
-                    >
-                      <div className={styles.timelineMarker}>
-                        {isCompleted ? (
-                          <MdCheckCircle size={20} />
-                        ) : (
-                          <div className={styles.timelineDotEmpty}></div>
-                        )}
+                    return (
+                      <div
+                        key={stage.key}
+                        className={`${styles.timelineStep} ${
+                          isCompleted ? styles.timelineStepCompleted : ""
+                        } ${isCurrent ? styles.timelineStepCurrent : ""}`}
+                      >
+                        <div className={styles.timelineMarker}>
+                          {isCompleted ? (
+                            <MdCheckCircle size={20} />
+                          ) : (
+                            <div className={styles.timelineDotEmpty}></div>
+                          )}
+                        </div>
+                        <div className={styles.timelineLabel}>
+                          {stage.label}
+                        </div>
                       </div>
-                      <div className={styles.timelineLabel}>{stage.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -317,15 +373,28 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className={styles.cardContent}>
-              {nextAction ? (
+              {isCancelled ? (
+                <div className={styles.completedState}>
+                  <div className={styles.completedIconWrapper}>
+                    <MdCheckCircle size={48} />
+                  </div>
+                  <h3 className={styles.completedTitle}>Order Cancelled</h3>
+                  <p className={styles.completedText}>
+                    This item was cancelled by the customer. No further action
+                    is required.
+                  </p>
+                </div>
+              ) : nextAction ? (
                 <div className={styles.actionContent}>
                   <div className={styles.currentStatusBox}>
-                    <span className={styles.currentStatusLabel}>Current Status</span>
+                    <span className={styles.currentStatusLabel}>
+                      Current Status
+                    </span>
                     <span className={styles.currentStatusValue}>
                       {timelineStages[currentStageIndex]?.label}
                     </span>
                   </div>
-                  
+
                   <button
                     className={styles.updateButton}
                     onClick={handleStatusUpdate}
@@ -343,7 +412,7 @@ const OrderDetails = () => {
                       </>
                     )}
                   </button>
-                  
+
                   <p className={styles.actionHint}>
                     This will move the order to the next stage
                   </p>
@@ -355,7 +424,8 @@ const OrderDetails = () => {
                   </div>
                   <h3 className={styles.completedTitle}>Order Delivered!</h3>
                   <p className={styles.completedText}>
-                    This order item has been successfully delivered to the customer
+                    This order item has been successfully delivered to the
+                    customer
                   </p>
                 </div>
               )}

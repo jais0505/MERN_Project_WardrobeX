@@ -55,7 +55,7 @@ var transporter = mailer.createTransport({
   service: "gmail",
   auth: {
     user: "contact.wardrobe.official@gmail.com", //from email Id
-    pass: "ceomswufmvsviqcl", // App password created from google account
+    pass: "ypdscrtcfreqjvwj", // App password created from google account
   },
 });
 function sendEmail(to, content, subject) {
@@ -1867,6 +1867,7 @@ app.get("/order/details/:orderId", async (req, res) => {
         quantity: item.quantity,
         price: item.orderItemPrice,
         itemStatus: item.orderItemStatus,
+        refundStatus: item.refundStatus,
       };
     });
 
@@ -2460,6 +2461,11 @@ app.patch("/order-item/:orderItemId/cancel", async (req, res) => {
     orderItem.refundStatus = "initiated";
     await orderItem.save();
 
+    await Stock.findOneAndUpdate(
+      { variantSizeId: orderItem.variantSizeId },
+      { $inc: { stockQuantity: orderItem.quantity } }
+    );
+
     // 🔄 Update Order
     const order = await Order.findById(orderItem.orderId);
 
@@ -2488,6 +2494,145 @@ app.patch("/order-item/:orderItemId/cancel", async (req, res) => {
     res.status(500).json({ message: "Cancellation failed" });
   }
 });
+
+//Refund backend for Admin
+app.patch("/admin/order-item/:orderItemId/refund", async (req, res) => {
+  try {
+    const { orderItemId } = req.params;
+    const { refundStatus } = req.body;
+
+    const validStatuses = ["approved", "completed"];
+    if (!validStatuses.includes(refundStatus)) {
+      return res.status(400).json({ message: "Invalid refund status" });
+    }
+
+    const orderItem = await OrderItem.findById(orderItemId);
+    if (!orderItem) {
+      return res.status(404).json({ message: "Order item not found" });
+    }
+
+    if (orderItem.orderItemStatus !== "cancelled") {
+      return res.status(400).json({ message: "Refund allowed only for cancelled items" });
+    }
+
+    if (refundStatus === "approved" && orderItem.refundStatus !== "initiated") {
+      return res.status(400).json({ message: "Refund must be initiated before approval" });
+    }
+
+    if (refundStatus === "completed" && orderItem.refundStatus !== "approved") {
+      return res.status(400).json({ message: "Refund must be approved before completion" });
+    }
+
+    // Update refund status
+    orderItem.refundStatus = refundStatus;
+    await orderItem.save();
+
+    // Update order status if all items refunded
+    const orderItems = await OrderItem.find({ orderId: orderItem.orderId });
+    const allRefunded = orderItems.every(item =>
+      item.orderItemStatus === "cancelled" && item.refundStatus === "completed"
+    );
+    if (allRefunded) {
+      await Order.findByIdAndUpdate(orderItem.orderId, { orderStatus: "refunded" });
+    }
+
+    // ✅ Send email only if refund is completed
+    if (refundStatus === "completed") {
+      const order = await Order.findById(orderItem.orderId);
+
+      // Fetch user by userId
+      const user = await User.findById(order.userId);
+
+      if (user && user.userEmail) {
+        console.log("Refund email will be sent to:", user.userEmail);
+
+        const refundAmount = orderItem.orderItemPrice * orderItem.quantity;
+
+        const emailContent = `
+<html>
+<body>
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px;">
+    <h2>Refund Completed</h2>
+    <p>Hi <strong>${user.userName || "Customer"}</strong>,</p>
+    <p>Your refund for the cancelled item has been successfully processed.</p>
+    <p><strong>Amount refunded:</strong> ₹${refundAmount}</p>
+    <p>Order ID: #${order._id.toString().slice(-8).toUpperCase()}</p>
+    <p>The amount will be credited to your original payment method within 3–5 business days.</p>
+    <p>Thank you for shopping with us.</p>
+    <strong>Wardrobe</strong>
+  </div>
+</body>
+</html>`;
+
+        await sendEmail(user.userEmail, emailContent, "Refund Completed – Wardrobe");
+
+        console.log("Refund email sent successfully");
+      } else {
+        console.log("User not found or email missing for refund notification");
+      }
+    }
+
+    res.json({ message: `Refund ${refundStatus} successfully` });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Refund update failed" });
+  }
+});
+
+// GET /admin/refunds
+app.get("/admin/refunds", async (req, res) => {
+  try {
+    // Fetch all cancelled order items
+    const refundItems = await OrderItem.find({ orderItemStatus: "cancelled" });
+
+    const itemsWithUser = await Promise.all(refundItems.map(async (item) => {
+      const order = await Order.findById(item.orderId);
+      const user = await User.findById(order.userId);
+
+      // Step 1: Get variantSize
+      const variantSize = await VariantSize.findById(item.variantSizeId);
+      let productName = "Unknown Product";
+
+      if (variantSize) {
+        // Step 2: Get variant
+        const variant = await Variant.findById(variantSize.variantId);
+        if (variant) {
+          // Step 3: Get product
+          const product = await Product.findById(variant.productId);
+          if (product) {
+            productName = product.productName;
+          }
+        }
+      }
+
+      return {
+        orderItemId: item._id,
+        orderId: order._id,
+        userName: user ? user.userName : "Unknown",
+        userEmail: user ? user.userEmail : "",
+        productName,
+        quantity: item.quantity,
+        price: item.orderItemPrice,
+        refundStatus: item.refundStatus,
+        reason: item.cancellationReason,
+      };
+    }));
+
+    res.json(itemsWithUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch refund items" });
+  }
+});
+
+
+
+
+
+
+
+
 
 const wishListSchemaStructure = new mongoose.Schema({
   productId: {
@@ -2795,13 +2940,27 @@ const ratingReviewSchemaStructure = new mongoose.Schema({
     ref: "ordercollection",
     required: true,
   },
-  ratingValue: {
-    type: String,
+  orderItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "orderitemcollection",
     required: true,
+    unique: true
+  },
+  ratingValue: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
   },
   reviewContent: {
     type: String,
     required: true,
+    trim: true
+  },
+  status: {
+    type: String,
+    enum: ["active", "hidden"],
+    default: "active",
   },
   ratingReviewDate: {
     type: Date,
@@ -2913,6 +3072,51 @@ app.get("/RatingReviewPopulate", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+//Rating & Review Api
+app.post("/review", async (req, res) => {
+  try {
+    // const userId = req.user.id; // from auth middleware
+    const {userId, orderItemId, ratingValue, reviewContent } = req.body;
+
+    // 1️⃣ Order item
+    const orderItem = await OrderItem.findById(orderItemId);
+    if (!orderItem)
+      return res.status(404).json({ message: "Order item not found" });
+
+    if (orderItem.orderItemStatus !== "delivered")
+      return res.status(400).json({ message: "Item not delivered yet" });
+
+    // 2️⃣ Order
+    const order = await Order.findById(orderItem.orderId);
+    if (!order || order.userId.toString() !== userId)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    if (order.orderStatus !== "paymentSuccess")
+      return res.status(400).json({ message: "Invalid order status" });
+
+    // 3️⃣ Check existing review
+    const existingReview = await Review.findOne({ orderItemId });
+    if (existingReview)
+      return res.status(400).json({ message: "Already reviewed" });
+
+    // 4️⃣ Create review
+    const review = await Review.create({
+      userId,
+      productId: orderItem.productId,
+      orderId: order._id,
+      orderItemId,
+      ratingValue,
+      reviewContent,
+    });
+
+    res.status(201).json({ message: "Review added successfully", review });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to add review" });
+  }
+});
+
 
 const categorySchemeStructure = new mongoose.Schema({
   categoryName: {
@@ -3693,7 +3897,7 @@ app.post("/District", async (req, res) => {
     </div>
 </body>
 </html> `;
-    sendEmail("abcd5050@gmail.com", content, "verify");
+    sendEmail("jaisjose5050@gmail.com", content, "verify");
 
     res.json({ message: "District inserted successfully" });
   } catch (err) {

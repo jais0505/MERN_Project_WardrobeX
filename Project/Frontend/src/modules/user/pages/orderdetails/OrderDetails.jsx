@@ -11,8 +11,10 @@ import { useNavigate, useParams } from "react-router";
 import axios from "axios";
 import CancelOrderModal from "../cancelordermodal/CancelOrderModal";
 import { toast } from "react-toastify";
+import { RiStarFill } from "react-icons/ri";
 
 const OrderDetails = () => {
+  const userId = sessionStorage.getItem('uid');
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [orderData, setOrderData] = useState(null);
@@ -173,7 +175,7 @@ const OrderDetails = () => {
 
   const handleConfirmCancel = async (orderItemId, reason) => {
     try {
-      const res =await axios.patch(
+      const res = await axios.patch(
         `http://127.0.0.1:5000/order-item/${orderItemId}/cancel`,
         { reason }
       );
@@ -318,9 +320,19 @@ const OrderDetails = () => {
                         </div>
                       )}
 
-                      {product.itemStatus === "cancelled" && (
-                        <span className={styles.cancelledBadge}>Cancelled</span>
-                      )}
+                      {product.itemStatus === "cancelled" &&
+                        product.refundStatus === "completed" && (
+                          <div className={styles.refundText}>
+                            Cancelled & Refunded
+                          </div>
+                        )}
+
+                      {product.itemStatus === "cancelled" &&
+                        product.refundStatus !== "completed" && (
+                          <div className={styles.refundText}>
+                            Cancelled (Refund in progress)
+                          </div>
+                        )}
 
                       {![
                         "cancelled",
@@ -338,6 +350,18 @@ const OrderDetails = () => {
                           }
                         >
                           Cancel Item
+                        </button>
+                      )}
+
+                      {product.itemStatus === "delivered" && (
+                        <button
+                          className={styles.rateProductBtn}
+                          onClick={() =>
+                            console.log("Rate Product:", product.orderItemId + "\n" + "UserId:", userId)
+                          }
+                        >
+                          <RiStarFill className={styles.starIcon} />
+                          <span>Rate Product</span>
                         </button>
                       )}
                     </div>
@@ -444,6 +468,12 @@ const OrderDetails = () => {
                   <div className={styles.infoLabel}>Amount Paid</div>
                   <div className={styles.infoValueBold}>
                     ₹{orderData.totalAmount}
+                  </div>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoLabel}>Refund Amount</div>
+                  <div className={styles.infoValueBold}>
+                    ₹{orderData.refundAmount || 0}
                   </div>
                 </div>
               </div>

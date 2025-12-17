@@ -13,6 +13,7 @@ import DashboardHero from '../modules/admin/components/dashboardhero/DashboardHe
 import District from '../modules/admin/pages/district/District'
 import Place from '../modules/admin/pages/place/Place'
 import ShopDetails from '../modules/admin/pages/shopDetails/ShopDetails'
+import Refunds from '../modules/admin/pages/refunds/Refunds'
 
 const AdminRoutes = () => (
   <Routes>
@@ -30,6 +31,7 @@ const AdminRoutes = () => (
     <Route path="/shop" element={<Shop />} />
     <Route path="/shop/:id" element={<ShopDetails />} />
     <Route path="/complaint" element={<Complaints />} />
+    <Route path="/refunds" element={<Refunds />} />
   </Routes>
 )
 

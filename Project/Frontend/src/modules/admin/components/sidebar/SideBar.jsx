@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styles from './SideBar.module.css'
 import { HiDotsHorizontal, HiLogin, HiOutlineShoppingBag } from 'react-icons/hi'
 import { FiCornerDownRight, FiSearch } from 'react-icons/fi'
-import { RiDashboardFill } from 'react-icons/ri'
+import { RiDashboardFill, RiMoneyRupeeCircleFill } from 'react-icons/ri'
 import { TbCategoryPlus, TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand, TbRulerMeasure2 } from 'react-icons/tb'
 import { SiBrandfolder } from 'react-icons/si'
 import { LuUsers } from 'react-icons/lu'
@@ -100,6 +100,12 @@ const SideBar = () => {
                                 <li>
                                     <HiOutlineShoppingBag className={styles.icon} />
                                     <span>Shops</span>
+                                </li>
+                            </NavLink>
+                            <NavLink to="/admin/refunds" style={{ textDecoration: "none" }} className={({ isActive }) => isActive ? styles.activeMenu : ""}>
+                                <li>
+                                    <RiMoneyRupeeCircleFill className={styles.icon} />
+                                    <span>Refunds</span>
                                 </li>
                             </NavLink>
                             <NavLink to="/admin/complaint" style={{ textDecoration: "none" }} className={({ isActive }) => isActive ? styles.activeMenu : ""}>

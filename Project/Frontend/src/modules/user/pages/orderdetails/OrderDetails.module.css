@@ -645,3 +645,73 @@
   font-weight: 600;
   font-size: 13px;
 }
+
+
+/* styles.module.css */
+.refundText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  
+  /* Soft red/gray palette for cancellation */
+  background-color: #fef2f2; 
+  color: #991b1b;
+  border: 1px solid #fee2e2;
+  
+  margin-top: 8px;
+  width: fit-content;
+}
+
+/* Optional: change color if it's completed vs in-progress */
+.refundText.completed {
+  background-color: #f0fdf4;
+  color: #166534;
+  border-color: #dcfce7;
+}
+
+.rateProductBtn {
+  margin-top: 12px;
+  padding: 10px 18px;
+  background: #000000; /* Deep Black */
+  color: #ffffff;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Space between icon and text */
+}
+
+/* The Star Icon Styling */
+.starIcon {
+  font-size: 20px; /* Slightly smaller than 24px feels more balanced with 14px text */
+  color: #ffd700; /* Premium Gold */
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.rateProductBtn:hover {
+  /* On hover, background becomes a gold gradient */
+  background: linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c);
+  color: #000000;
+  border-color: #b38728;
+  transform: translateY(-2px);
+}
+
+.rateProductBtn:hover .starIcon {
+  /* On hover, the star turns black to match the text on the gold background */
+  color: #000000;
+  transform: scale(1.2) rotate(15deg); /* Subtle pop and tilt */
+}
+
+.rateProductBtn:active {
+  transform: translateY(0) scale(0.98);
+}
+

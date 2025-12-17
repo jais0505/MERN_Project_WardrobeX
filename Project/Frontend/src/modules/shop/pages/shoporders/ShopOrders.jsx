@@ -10,7 +10,7 @@ import {
   FiSearch,
   FiFilter,
 } from "react-icons/fi";
-import { MdPendingActions } from "react-icons/md";
+import { MdCancel, MdPendingActions } from "react-icons/md";
 import styles from "./ShopOrders.module.css";
 import { useNavigate } from "react-router";
 import axios from "axios";
@@ -69,6 +69,11 @@ const ShopOrders = () => {
       color: "#10b981",
       icon: FiCheckCircle,
     },
+    cancelled: {
+    label: "Cancelled",
+    color: "#ef4444",
+    icon: MdCancel,
+  },
   };
 
   // Filter items
