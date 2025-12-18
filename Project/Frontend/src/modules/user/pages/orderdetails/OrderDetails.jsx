@@ -11,10 +11,10 @@ import { useNavigate, useParams } from "react-router";
 import axios from "axios";
 import CancelOrderModal from "../cancelordermodal/CancelOrderModal";
 import { toast } from "react-toastify";
-import { RiStarFill } from "react-icons/ri";
+import { RiQuestionLine, RiStarFill } from "react-icons/ri";
 
 const OrderDetails = () => {
-  const userId = sessionStorage.getItem('uid');
+  // const userId = sessionStorage.getItem('uid');
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [orderData, setOrderData] = useState(null);
@@ -62,6 +62,7 @@ const OrderDetails = () => {
       });
 
       setLoading(false);
+      console.log("Order Data:", res.data);
     } catch (error) {
       console.error("Error fetching order details:", error);
       setLoading(false);
@@ -257,114 +258,182 @@ const OrderDetails = () => {
               <div className={styles.productsList}>
                 {orderData.products.map((product) => (
                   <div key={product.orderItemId} className={styles.productItem}>
-                    <div className={styles.productImageBox}>
-                      <img
-                        src={`http://127.0.0.1:5000/images/${product.productImage}`}
-                        alt={product.productName}
-                        className={styles.productImage}
-                      />
-                    </div>
-                    <div className={styles.productDetails}>
-                      <h3 className={styles.productName}>
-                        {product.productName}
-                      </h3>
-                      <p className={styles.productBrand}>{product.brandName}</p>
-                      <div className={styles.productSpecs}>
-                        <span>
-                          Size: <strong>{product.sizeName}</strong>
-                        </span>
-                        <span className={styles.dot}>•</span>
-                        <span>
-                          Color: <strong>{product.colorName}</strong>
-                        </span>
-                        <span className={styles.dot}>•</span>
-                        <span>
-                          Qty: <strong>{product.quantity}</strong>
-                        </span>
+                    {/* Main Product Section */}
+                    <div className={styles.productMainSection}>
+                      <div className={styles.productImageBox}>
+                        <img
+                          src={`http://127.0.0.1:5000/images/${product.productImage}`}
+                          alt={product.productName}
+                          className={styles.productImage}
+                        />
                       </div>
-
-                      {/* ITEM TIMELINE */}
-                      <div className={styles.itemTimelineWrapper}>
-                        <div className={styles.itemTimelineTitle}>
-                          Order Status
+                      <div className={styles.productDetails}>
+                        <h3 className={styles.productName}>
+                          {product.productName}
+                        </h3>
+                        <p className={styles.productBrand}>
+                          {product.brandName}
+                        </p>
+                        <div className={styles.productSpecs}>
+                          <span>
+                            Size: <strong>{product.sizeName}</strong>
+                          </span>
+                          <span className={styles.dot}>•</span>
+                          <span>
+                            Color: <strong>{product.colorName}</strong>
+                          </span>
+                          <span className={styles.dot}>•</span>
+                          <span>
+                            Qty: <strong>{product.quantity}</strong>
+                          </span>
                         </div>
-                        <div className={styles.itemTimeline}>
-                          {getItemTimeline(product.itemStatus).map((step) => (
-                            <div
-                              key={step.key}
-                              className={`${styles.itemTimelineStep}
-        ${step.completed ? styles.itemStepCompleted : ""}
-        ${step.current ? styles.itemStepCurrent : ""}`}
-                            >
-                              <div className={styles.itemTimelineDot}>
-                                {step.completed || step.isFinal ? (
-                                  <MdCheckCircle size={14} />
-                                ) : (
-                                  <MdAccessTime size={14} />
-                                )}
-                              </div>
+                      </div>
+                      <div className={styles.productPricing}>
+                        {/* Add this inside the div with className={styles.productPricing} */}
 
-                              <div className={styles.itemTimelineLabel}>
-                                {step.label}
-                              </div>
+                        {(orderData.orderStatus === "paymentSuccess" ||
+                          product.itemStatus === "delivered") && (
+                          <button
+                            className={styles.needHelpBtn}
+                            onClick={() => {
+                              console.log("orderItemId:", product.orderItemId);
+                      
+                              navigate(`/user/complaints/new`, {
+                                state: {
+                                  orderItemId: product.orderItemId,
+                                },
+                              });
+                            }}
+                          >
+                            <RiQuestionLine className={styles.helpIcon} />
+                            <span>Need Help?</span>
+                          </button>
+                        )}
+
+                        <div className={styles.itemPrice}>₹{product.price}</div>
+                        {product.quantity > 1 && (
+                          <div className={styles.itemTotal}>
+                            Total: ₹{product.price * product.quantity}
+                          </div>
+                        )}
+
+                        {product.itemStatus === "cancelled" &&
+                          product.refundStatus === "completed" && (
+                            <div className={styles.refundText}>
+                              Cancelled & Refunded
                             </div>
-                          ))}
-                        </div>
+                          )}
+
+                        {product.itemStatus === "cancelled" &&
+                          product.refundStatus !== "completed" && (
+                            <div className={styles.refundText}>
+                              Cancelled (Refund in progress)
+                            </div>
+                          )}
+
+                        {![
+                          "cancelled",
+                          "shipped",
+                          "outForDelivery",
+                          "delivered",
+                        ].includes(product.itemStatus) && (
+                          <button
+                            className={styles.cancelItemBtn}
+                            onClick={() =>
+                              handleCancelClick(
+                                product.orderItemId,
+                                product.productName
+                              )
+                            }
+                          >
+                            Cancel Item
+                          </button>
+                        )}
+
+                        {product.itemStatus === "delivered" &&
+                          !product.isReviewed && (
+                            <button
+                              className={styles.rateProductBtn}
+                              onClick={() =>
+                                navigate(
+                                  `/user/rate&review/${product.orderItemId}`
+                                )
+                              }
+                            >
+                              <RiStarFill className={styles.starIcon} />
+                              <span>Rate Product</span>
+                            </button>
+                          )}
                       </div>
                     </div>
-                    <div className={styles.productPricing}>
-                      <div className={styles.itemPrice}>₹{product.price}</div>
-                      {product.quantity > 1 && (
-                        <div className={styles.itemTotal}>
-                          Total: ₹{product.price * product.quantity}
+
+                    {/* ITEM TIMELINE SECTION */}
+                    <div className={styles.itemTimelineWrapper}>
+                      <div className={styles.itemTimelineTitle}>
+                        Order Status
+                      </div>
+                      <div className={styles.itemTimeline}>
+                        {getItemTimeline(product.itemStatus).map((step) => (
+                          <div
+                            key={step.key}
+                            className={`${styles.itemTimelineStep}
+              ${step.completed ? styles.itemStepCompleted : ""}
+              ${step.current ? styles.itemStepCurrent : ""}`}
+                          >
+                            <div className={styles.itemTimelineDot}>
+                              {step.completed || step.isFinal ? (
+                                <MdCheckCircle size={14} />
+                              ) : (
+                                <MdAccessTime size={14} />
+                              )}
+                            </div>
+
+                            <div className={styles.itemTimelineLabel}>
+                              {step.label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* USER REVIEW SECTION - Separate section below timeline */}
+                    {product.itemStatus === "delivered" &&
+                      product.isReviewed && (
+                        <div className={styles.userReviewSection}>
+                          <div className={styles.reviewSectionHeader}>
+                            <RiStarFill className={styles.reviewStarIcon} />
+                            <span className={styles.reviewSectionTitle}>
+                              Your Review
+                            </span>
+                          </div>
+                          <div className={styles.reviewRating}>
+                            <span className={styles.ratingLabel}>Rating:</span>
+                            <div className={styles.ratingStars}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <RiStarFill
+                                  key={star}
+                                  className={
+                                    star <= product.ratingValue
+                                      ? styles.starFilled
+                                      : styles.starEmpty
+                                  }
+                                />
+                              ))}
+                            </div>
+                            <span className={styles.ratingValue}>
+                              {product.ratingValue}/5
+                            </span>
+                          </div>
+                          <div className={styles.reviewTextBox}>
+                            <span className={styles.reviewLabel}>
+                              Your feedback:
+                            </span>
+                            <p className={styles.reviewText}>
+                              {product.reviewContent}
+                            </p>
+                          </div>
                         </div>
                       )}
-
-                      {product.itemStatus === "cancelled" &&
-                        product.refundStatus === "completed" && (
-                          <div className={styles.refundText}>
-                            Cancelled & Refunded
-                          </div>
-                        )}
-
-                      {product.itemStatus === "cancelled" &&
-                        product.refundStatus !== "completed" && (
-                          <div className={styles.refundText}>
-                            Cancelled (Refund in progress)
-                          </div>
-                        )}
-
-                      {![
-                        "cancelled",
-                        "shipped",
-                        "outForDelivery",
-                        "delivered",
-                      ].includes(product.itemStatus) && (
-                        <button
-                          className={styles.cancelItemBtn}
-                          onClick={() =>
-                            handleCancelClick(
-                              product.orderItemId,
-                              product.productName
-                            )
-                          }
-                        >
-                          Cancel Item
-                        </button>
-                      )}
-
-                      {product.itemStatus === "delivered" && (
-                        <button
-                          className={styles.rateProductBtn}
-                          onClick={() =>
-                            console.log("Rate Product:", product.orderItemId + "\n" + "UserId:", userId)
-                          }
-                        >
-                          <RiStarFill className={styles.starIcon} />
-                          <span>Rate Product</span>
-                        </button>
-                      )}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -384,20 +453,20 @@ const OrderDetails = () => {
                       : `₹${orderData.pricing.deliveryFee}`}
                   </span>
                 </div>
-                {orderData.pricing.discount > 0 && (
+                {
                   <div className={styles.priceRow}>
                     <span>Discount</span>
                     <span className={styles.discountAmount}>
                       -₹{orderData.pricing.discount}
                     </span>
                   </div>
-                )}
-                {orderData.pricing.tax > 0 && (
+                }
+                {
                   <div className={styles.priceRow}>
                     <span>Tax</span>
                     <span>₹{orderData.pricing.tax}</span>
                   </div>
-                )}
+                }
                 <div className={styles.divider}></div>
                 <div className={styles.priceRowTotal}>
                   <span>Order Total</span>
@@ -451,7 +520,11 @@ const OrderDetails = () => {
                   <div
                     className={`${styles.infoValue} ${styles.paymentSuccess}`}
                   >
-                    <MdCheckCircle /> {orderData.paymentStatus}
+                    <MdCheckCircle />{" "}
+                    {orderData.orderStatus === "paymentSuccess" ||
+                    orderData.orderStatus === "partiallyCancelled"
+                      ? "Success"
+                      : orderData.orderStatus}
                   </div>
                 </div>
                 <div className={styles.infoItem}>
@@ -473,7 +546,7 @@ const OrderDetails = () => {
                 <div className={styles.infoItem}>
                   <div className={styles.infoLabel}>Refund Amount</div>
                   <div className={styles.infoValueBold}>
-                    ₹{orderData.refundAmount || 0}
+                    ₹{orderData.refundedAmount || 0}
                   </div>
                 </div>
               </div>

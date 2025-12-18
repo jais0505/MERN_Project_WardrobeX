@@ -45,6 +45,10 @@ const Navbar = () => {
           <Link to="/user/myorders" className={styles.link}>MY ORDERS</Link>
           {menu === "myorders" ? <hr /> : <></>}
         </li>
+        <li onClick={() => handleMenuClick("mycomplaints")}>
+          <Link to="/user/mycomplaints" className={styles.link}>SUPPORT HISTORY</Link>
+          {menu === "mycomplaints" ? <hr /> : <></>}
+        </li>
       </ul>
 
       <div className={styles.nav_icons}>

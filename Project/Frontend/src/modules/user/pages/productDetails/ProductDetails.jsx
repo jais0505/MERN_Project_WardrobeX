@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { FaCircleCheck } from "react-icons/fa6";
 import { BsHeart, BsHeartFill } from "react-icons/bs";
 import { toast } from "react-toastify";
+import { RiStarFill, RiStarLine } from "react-icons/ri";
 
 const ProductDetails = () => {
   const navigate = useNavigate();
@@ -22,11 +23,47 @@ const ProductDetails = () => {
   const [images, setImages] = useState([]);
   const [mainImage, setMainImage] = useState("");
 
+  const [reviewsData, setReviewsData] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+    reviews: [],
+  });
+
+  const timeAgo = (date) => {
+  const now = new Date();
+  const past = new Date(date);
+
+  const seconds = Math.floor((now - past) / 1000);
+
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
+
+  if (seconds < 60) return "Just now";
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+  return `${years} year${years > 1 ? "s" : ""} ago`;
+};
+
+
   const fetchProductDetails = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/Product/${id}`);
       if (res.data.product) {
         setProduct(res.data.product);
+        // console.log("Product Details:", res.data.product);
+        setReviewsData({
+          averageRating: res.data.averageRating,
+          totalReviews: res.data.totalReviews,
+          reviews: res.data.reviews,  
+        });
+        console.log("Reviews Data:", res.data);
       }
     } catch (err) {
       console.error("Error fetching product details", err);
@@ -98,7 +135,7 @@ const ProductDetails = () => {
       );
       if (res.data.stock) {
         setStock(res.data.stock);
-        console.log("Stock{}", res.data.stock);
+        console.log("Stock{}", stock);
       } else if (!res.data.stock) {
         console.log("Not stock for this size", res.data.stock);
       }
@@ -375,6 +412,49 @@ const ProductDetails = () => {
             <button className={styles.buyNow} onClick={() => handleBuyNow()}>
               Buy Now
             </button>
+          </div>
+
+          <div className={styles.ratingSection}>
+            <div className={styles.averageRating}>
+              <span>{reviewsData.averageRating.toFixed(1)}</span>
+              {[1, 2, 3, 4, 5].map((i) =>
+                i <= Math.round(reviewsData.averageRating) ? (
+                  <RiStarFill key={i} color="#FFD700" />
+                ) : (
+                  <RiStarLine key={i} color="#FFD700" />
+                )
+              )}
+              <span>({reviewsData.totalReviews} reviews)</span>
+            </div>
+
+            {/* Latest Reviews */}
+            <div className={styles.latestReviews}>
+              <h3>Latest Reviews</h3>
+              {reviewsData.reviews.length === 0 ? (
+                <p>No reviews yet</p>
+              ) : (
+                reviewsData.reviews.map((r) => (
+                  <div key={r._id} className={styles.reviewItem}>
+                    <div className={styles.reviewHeader}>
+                      <strong>{r.userId?.userName || "Anonymous"}</strong>
+                      <span>
+                        {[1, 2, 3, 4, 5].map((i) =>
+                          i <= r.ratingValue ? (
+                            <RiStarFill key={i} color="#FFD700" />
+                          ) : (
+                            <RiStarLine key={i} color="#FFD700" />
+                          )
+                        )}
+                      </span>
+                    </div>
+                    <p>{r.reviewContent}</p>
+                    <small>
+                     {timeAgo(r.ratingReviewDate)}
+                    </small>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

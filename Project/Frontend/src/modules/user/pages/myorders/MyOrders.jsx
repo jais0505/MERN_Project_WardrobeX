@@ -17,7 +17,7 @@ const MyOrders = () => {
           `http://127.0.0.1:5000/order/user/${userId}`
         );
         setOrders(res.data.orders || []);
-        console.log("MYOrderData:", res.data.orders);
+        // console.log("MYOrderData:", res.data.orders);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -33,6 +33,7 @@ const MyOrders = () => {
     buyNow: "Order Initiated",
     paymentPending: "Payment Pending",
     paymentSuccess: "Order Placed",
+    partiallyCancelled: "Partially Cancelled",
     cancelled: "Order Cancelled",
     refunded: "Refunded",
   };
@@ -54,6 +55,18 @@ const MyOrders = () => {
   //   }
   // };
 
+  const getOrderSummaryText = (order) => {
+    if (order.orderStatus === "partiallyCancelled") {
+      return "Some items in this order were cancelled";
+    }
+
+    if (order.orderStatus === "cancelled") {
+      return "Order cancelled";
+    }
+
+    return null;
+  };
+
   const shortenOrderId = (orderId) => {
     if (!orderId || orderId.length < 10) return orderId;
     return `#${orderId.slice(0, 5)}...${orderId.slice(-3)}`;
@@ -71,11 +84,13 @@ const MyOrders = () => {
   const getOrderStatusClass = (status) => {
     switch (status) {
       case "paymentSuccess":
-        return styles.statusPayment; 
+        return styles.statusPayment;
       case "paymentPending":
-        return styles.statusProcessing; 
+        return styles.statusProcessing;
+      case "partiallyCancelled":
+      return styles.statusPartial;
       case "cancelled":
-        return styles.statusCancelled; 
+        return styles.statusCancelled;
       case "refunded":
         return styles.statusDefault;
       default:
@@ -142,8 +157,16 @@ const MyOrders = () => {
                       {ORDER_STATUS_LABELS[order.orderStatus]}
                     </span>
 
+                    {getOrderSummaryText(order) && (
+                      <div className={styles.orderSummaryText}>
+                        {getOrderSummaryText(order)}
+                      </div>
+                    )}
+
                     {/* <span className={styles.deliveryStatus}>
-                      {getDeliveryLabel(order.previewItem?.itemStatus)}
+                      {order.orderStatus === "partiallyCancelled"
+                        ? "Partially cancelled"
+                        : getDeliveryLabel(order.previewItem?.itemStatus)}
                     </span> */}
                   </div>
                 </div>
@@ -184,10 +207,12 @@ const MyOrders = () => {
                   <div className={styles.orderDetails}>
                     <div className={styles.detailItem}>
                       <span className={styles.detailLabel}>Total Amount</span>
+
                       <span className={styles.detailValue}>
                         ₹{order.totalAmount}
                       </span>
                     </div>
+
                     <div className={styles.detailItem}>
                       <span className={styles.detailLabel}>Delivery To</span>
                       <span className={styles.detailValue}>

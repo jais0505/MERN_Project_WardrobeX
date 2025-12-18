@@ -34,9 +34,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .errorState {
@@ -241,6 +239,7 @@
 
 .productItem {
   display: flex;
+  flex-direction: column;
   gap: 20px;
   padding: 24px;
   background: #fafafa;
@@ -253,6 +252,12 @@
   border-color: #e0e0e0;
   background: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Product Main Section */
+.productMainSection {
+  display: flex;
+  gap: 20px;
 }
 
 .productImageBox {
@@ -313,7 +318,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -328,9 +333,67 @@
   color: #666;
 }
 
+/* Refund Text */
+.refundText {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F44336;
+  padding: 8px 12px;
+  background: #ffebee;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Cancel Item Button */
+.cancelItemBtn {
+  padding: 10px 20px;
+  background: #fff;
+  color: #F44336;
+  border: 2px solid #F44336;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.cancelItemBtn:hover {
+  background: #F44336;
+  color: #fff;
+}
+
+/* Rate Product Button */
+.rateProductBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #FFA726;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.rateProductBtn:hover {
+  background: #FB8C00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+}
+
+.starIcon {
+  font-size: 16px;
+}
+
 /* Item Timeline */
 .itemTimelineWrapper {
-  margin-top: 20px;
   padding-top: 20px;
   border-top: 2px solid #e0e0e0;
 }
@@ -395,12 +458,9 @@
 }
 
 @keyframes pulseTimeline {
-
-  0%,
-  100% {
+  0%, 100% {
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
   }
-
   50% {
     box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.05);
   }
@@ -441,6 +501,95 @@
 
 .itemStepCompleted::before {
   background: #000;
+}
+
+/* User Review Section */
+.userReviewSection {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+}
+
+.reviewSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.reviewStarIcon {
+  font-size: 24px;
+  color: #FFA726;
+}
+
+.reviewSectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+}
+
+.reviewRating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #ffe49e;
+}
+
+.ratingLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.ratingStars {
+  display: flex;
+  gap: 4px;
+}
+
+.starFilled {
+  color: #FFA726;
+  font-size: 18px;
+}
+
+.starEmpty {
+  color: #e0e0e0;
+  font-size: 18px;
+}
+
+.ratingValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  margin-left: 4px;
+}
+
+.reviewTextBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reviewLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reviewText {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+  margin: 0;
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ffe49e;
 }
 
 /* Pricing Breakdown */
@@ -589,8 +738,11 @@
   }
 
   .productItem {
-    flex-direction: column;
     padding: 20px;
+  }
+
+  .productMainSection {
+    flex-direction: column;
   }
 
   .productImageBox {
@@ -605,113 +757,46 @@
   .itemPrice {
     font-size: 20px;
   }
+
+  .rateProductBtn,
+  .cancelItemBtn {
+    width: 100%;
+  }
 }
 
 
-.cancelItemBtn {
-  margin-top: 12px;
-  padding: 8px 16px;
-  /* Background: White */
-  background: #ffffff;
-  /* New Color: Deep Maroon */
-  color: #881337;
-  /* New Border: Deep Maroon */
-  border: 2px solid #881337;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
 
-.cancelItemBtn:hover {
-  /* New Hover Background: Deep Maroon */
-  background: #881337;
-  /* Hover Color: White */
-  color: #ffffff;
-  transform: translateY(-2px);
-  /* New Hover Box Shadow: Deep Maroon */
-  box-shadow: 0 4px 12px rgba(136, 19, 55, 0.4);
-}
-
-.cancelItemBtn:active {
-  transform: translateY(0);
-}
-
-.cancelledBadge {
-  color: #d32f2f;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-
-/* styles.module.css */
-.refundText {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  
-  /* Soft red/gray palette for cancellation */
-  background-color: #fef2f2; 
-  color: #991b1b;
-  border: 1px solid #fee2e2;
-  
+.needHelpBtn {
   margin-top: 8px;
-  width: fit-content;
-}
-
-/* Optional: change color if it's completed vs in-progress */
-.refundText.completed {
-  background-color: #f0fdf4;
-  color: #166534;
-  border-color: #dcfce7;
-}
-
-.rateProductBtn {
-  margin-top: 12px;
-  padding: 10px 18px;
-  background: #000000; /* Deep Black */
-  color: #ffffff;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 8px 16px;
+  background: transparent;
+  color: #000000;
+  border: 1.5px solid #000000;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Space between icon and text */
+  gap: 6px;
+  transition: all 0.2s ease-in-out;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%; /* Makes it consistent with other buttons in the column */
 }
 
-/* The Star Icon Styling */
-.starIcon {
-  font-size: 20px; /* Slightly smaller than 24px feels more balanced with 14px text */
-  color: #ffd700; /* Premium Gold */
-  transition: transform 0.3s ease, color 0.3s ease;
+.needHelpBtn:hover {
+  background: #000000;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.rateProductBtn:hover {
-  /* On hover, background becomes a gold gradient */
-  background: linear-gradient(135deg, #bf953f, #fcf6ba, #aa771c);
-  color: #000000;
-  border-color: #b38728;
-  transform: translateY(-2px);
+.needHelpBtn:active {
+  transform: translateY(0);
 }
 
-.rateProductBtn:hover .starIcon {
-  /* On hover, the star turns black to match the text on the gold background */
-  color: #000000;
-  transform: scale(1.2) rotate(15deg); /* Subtle pop and tilt */
+.helpIcon {
+  font-size: 18px;
 }
-
-.rateProductBtn:active {
-  transform: translateY(0) scale(0.98);
-}
-

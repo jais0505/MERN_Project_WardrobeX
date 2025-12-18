@@ -8,12 +8,12 @@ import Type from '../modules/admin/pages/type/Type'
 import Size from '../modules/admin/pages/size/Size'
 import Fit from '../modules/admin/pages/fit/Fit'
 import Color from '../modules/admin/pages/color/Color'
-import Complaints from '../modules/admin/pages/complaints/Complaints'
 import DashboardHero from '../modules/admin/components/dashboardhero/DashboardHero'
 import District from '../modules/admin/pages/district/District'
 import Place from '../modules/admin/pages/place/Place'
 import ShopDetails from '../modules/admin/pages/shopDetails/ShopDetails'
 import Refunds from '../modules/admin/pages/refunds/Refunds'
+import AdminComplaints from '../modules/admin/pages/admincomplaints/AdminComplaints'
 
 const AdminRoutes = () => (
   <Routes>
@@ -30,7 +30,7 @@ const AdminRoutes = () => (
     <Route path="/user" element={<User />} />
     <Route path="/shop" element={<Shop />} />
     <Route path="/shop/:id" element={<ShopDetails />} />
-    <Route path="/complaint" element={<Complaints />} />
+    <Route path="/complaint" element={<AdminComplaints />} />
     <Route path="/refunds" element={<Refunds />} />
   </Routes>
 )

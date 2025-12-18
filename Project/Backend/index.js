@@ -919,9 +919,28 @@ app.get("/Product/:id", async (req, res) => {
 
     if (!product) {
       return res.send({ message: "Product not found" });
-    } else {
-      return res.status(200).send({ product });
-    }
+    } 
+    
+    // Fetch reviews for this product
+    const reviews = await ReviewRating.find({ productId: product._id })
+      .sort({ reviewDate: -1 }) // newest first
+      .limit(5)                 // latest 5 reviews
+      .populate("userId", "userName"); // get user name
+
+
+    // Calculate average rating
+    const totalReviews = reviews.length;
+    const averageRating =
+      totalReviews > 0
+        ? reviews.reduce((acc, r) => acc + r.ratingValue, 0) / totalReviews
+        : 0;
+
+    return res.status(200).json({
+      product,
+      averageRating,
+      totalReviews,
+      reviews,
+    });
   } catch (err) {
     console.error("Error finding products:", err);
     res.status(500).json({ message: "Internal server error" });
@@ -1040,6 +1059,10 @@ app.put("/Product/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+
+
+
 
 const variantSchemaStructure = new mongoose.Schema({
   productId: {
@@ -1790,6 +1813,9 @@ app.get("/order/user/:userId", async (req, res) => {
           sizeName: previewItem.variantSizeId.sizeId.sizeName,
 
           colorName: previewItem.variantSizeId.variantId.colorId.colorName,
+
+          itemStatus: previewItem.orderItemStatus,
+          refundStatus: previewItem.refundStatus,
         },
       });
     }
@@ -1804,15 +1830,9 @@ app.get("/order/user/:userId", async (req, res) => {
 app.get("/order/details/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
-
-    // 1️⃣ Fetch order
     const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    // 2️⃣ Fetch order items with full population
     const orderItems = await OrderItem.find({ orderId }).populate({
       path: "variantSizeId",
       populate: [
@@ -1821,41 +1841,51 @@ app.get("/order/details/:orderId", async (req, res) => {
           path: "variantId",
           populate: [
             { path: "colorId" },
-            {
-              path: "productId",
-              populate: { path: "brandId" },
-            },
+            { path: "productId", populate: { path: "brandId" } },
           ],
         },
       ],
     });
 
     if (!orderItems.length) {
-      return res.status(200).json({
-        order,
-        items: [],
-      });
+      return res.status(200).json({ order, items: [] });
     }
 
-    // 3️⃣ Fetch variant images
     const variantIds = orderItems.map(
       (item) => item.variantSizeId.variantId._id
     );
 
-    const images = await Image.find({
-      variantId: { $in: variantIds },
-    });
+    const images = await Image.find({ variantId: { $in: variantIds } });
 
     const imageMap = {};
-    images.forEach((img) => {
-      imageMap[img.variantId.toString()] = img.productImage;
+    images.forEach(
+      (img) => (imageMap[img.variantId.toString()] = img.productImage)
+    );
+
+    const orderItemIds = orderItems.map((item) => item._id);
+    const reviews = await ReviewRating.find({ orderItemId: { $in: orderItemIds } });
+
+    const reviewMap = {};
+    reviews.forEach((r) => {
+      reviewMap[r.orderItemId.toString()] = {
+        isReviewed: true,
+        ratingValue: r.ratingValue,
+        reviewContent: r.reviewContent,
+        reviewDate: r.reviewDate,
+      };
     });
 
-    // 4️⃣ Build items response
     const itemsResponse = orderItems.map((item) => {
       const variant = item.variantSizeId.variantId;
       const product = variant.productId;
       const variantId = variant._id.toString();
+
+      const reviewInfo = reviewMap[item._id.toString()] || {
+        isReviewed: false,
+        ratingValue: null,
+        reviewContent: null,
+        reviewDate: null,
+      };
 
       return {
         orderItemId: item._id,
@@ -1868,16 +1898,17 @@ app.get("/order/details/:orderId", async (req, res) => {
         price: item.orderItemPrice,
         itemStatus: item.orderItemStatus,
         refundStatus: item.refundStatus,
+        ...reviewInfo, // add review info here
       };
     });
 
-    // 5️⃣ Final response
     return res.status(200).json({
       order: {
         orderId: order._id,
         orderDate: order.orderDate,
         orderStatus: order.orderStatus,
         totalAmount: order.totalAmount,
+        refundedAmount: order.refundedAmount,
         deliveryAddress: order.deliveryAddress,
         userName: order.userName,
         contactNo: order.contactNo,
@@ -1885,8 +1916,8 @@ app.get("/order/details/:orderId", async (req, res) => {
       },
       items: itemsResponse,
     });
-  } catch (error) {
-    console.error("Error fetching order details:", error);
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -2512,15 +2543,21 @@ app.patch("/admin/order-item/:orderItemId/refund", async (req, res) => {
     }
 
     if (orderItem.orderItemStatus !== "cancelled") {
-      return res.status(400).json({ message: "Refund allowed only for cancelled items" });
+      return res
+        .status(400)
+        .json({ message: "Refund allowed only for cancelled items" });
     }
 
     if (refundStatus === "approved" && orderItem.refundStatus !== "initiated") {
-      return res.status(400).json({ message: "Refund must be initiated before approval" });
+      return res
+        .status(400)
+        .json({ message: "Refund must be initiated before approval" });
     }
 
     if (refundStatus === "completed" && orderItem.refundStatus !== "approved") {
-      return res.status(400).json({ message: "Refund must be approved before completion" });
+      return res
+        .status(400)
+        .json({ message: "Refund must be approved before completion" });
     }
 
     // Update refund status
@@ -2529,11 +2566,15 @@ app.patch("/admin/order-item/:orderItemId/refund", async (req, res) => {
 
     // Update order status if all items refunded
     const orderItems = await OrderItem.find({ orderId: orderItem.orderId });
-    const allRefunded = orderItems.every(item =>
-      item.orderItemStatus === "cancelled" && item.refundStatus === "completed"
+    const allRefunded = orderItems.every(
+      (item) =>
+        item.orderItemStatus === "cancelled" &&
+        item.refundStatus === "completed"
     );
     if (allRefunded) {
-      await Order.findByIdAndUpdate(orderItem.orderId, { orderStatus: "refunded" });
+      await Order.findByIdAndUpdate(orderItem.orderId, {
+        orderStatus: "refunded",
+      });
     }
 
     // ✅ Send email only if refund is completed
@@ -2564,7 +2605,11 @@ app.patch("/admin/order-item/:orderItemId/refund", async (req, res) => {
 </body>
 </html>`;
 
-        await sendEmail(user.userEmail, emailContent, "Refund Completed – Wardrobe");
+        await sendEmail(
+          user.userEmail,
+          emailContent,
+          "Refund Completed – Wardrobe"
+        );
 
         console.log("Refund email sent successfully");
       } else {
@@ -2573,7 +2618,6 @@ app.patch("/admin/order-item/:orderItemId/refund", async (req, res) => {
     }
 
     res.json({ message: `Refund ${refundStatus} successfully` });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Refund update failed" });
@@ -2586,38 +2630,40 @@ app.get("/admin/refunds", async (req, res) => {
     // Fetch all cancelled order items
     const refundItems = await OrderItem.find({ orderItemStatus: "cancelled" });
 
-    const itemsWithUser = await Promise.all(refundItems.map(async (item) => {
-      const order = await Order.findById(item.orderId);
-      const user = await User.findById(order.userId);
+    const itemsWithUser = await Promise.all(
+      refundItems.map(async (item) => {
+        const order = await Order.findById(item.orderId);
+        const user = await User.findById(order.userId);
 
-      // Step 1: Get variantSize
-      const variantSize = await VariantSize.findById(item.variantSizeId);
-      let productName = "Unknown Product";
+        // Step 1: Get variantSize
+        const variantSize = await VariantSize.findById(item.variantSizeId);
+        let productName = "Unknown Product";
 
-      if (variantSize) {
-        // Step 2: Get variant
-        const variant = await Variant.findById(variantSize.variantId);
-        if (variant) {
-          // Step 3: Get product
-          const product = await Product.findById(variant.productId);
-          if (product) {
-            productName = product.productName;
+        if (variantSize) {
+          // Step 2: Get variant
+          const variant = await Variant.findById(variantSize.variantId);
+          if (variant) {
+            // Step 3: Get product
+            const product = await Product.findById(variant.productId);
+            if (product) {
+              productName = product.productName;
+            }
           }
         }
-      }
 
-      return {
-        orderItemId: item._id,
-        orderId: order._id,
-        userName: user ? user.userName : "Unknown",
-        userEmail: user ? user.userEmail : "",
-        productName,
-        quantity: item.quantity,
-        price: item.orderItemPrice,
-        refundStatus: item.refundStatus,
-        reason: item.cancellationReason,
-      };
-    }));
+        return {
+          orderItemId: item._id,
+          orderId: order._id,
+          userName: user ? user.userName : "Unknown",
+          userEmail: user ? user.userEmail : "",
+          productName,
+          quantity: item.quantity,
+          price: item.orderItemPrice,
+          refundStatus: item.refundStatus,
+          reason: item.cancellationReason,
+        };
+      })
+    );
 
     res.json(itemsWithUser);
   } catch (err) {
@@ -2626,13 +2672,35 @@ app.get("/admin/refunds", async (req, res) => {
   }
 });
 
+//Rating data fetch
+app.get("/order/item/:orderItemId", async (req, res) => {
+  const { orderItemId } = req.params;
+  const orderItem = await OrderItem.findById(orderItemId).populate({
+    path: "variantSizeId",
+    populate: [
+      { path: "sizeId" },
+      {
+        path: "variantId",
+        populate: [
+          { path: "colorId" },
+          { path: "productId", populate: { path: "brandId" } },
+        ],
+      },
+    ],
+  });
 
+  if (!orderItem)
+    return res.status(404).json({ message: "Order item not found" });
 
-
-
-
-
-
+  res.json({
+    productImage: orderItem.variantSizeId.variantId.productId.productImage,
+    productName: orderItem.variantSizeId.variantId.productId.productName,
+    brandName: orderItem.variantSizeId.variantId.productId.brandId.brandName,
+    sizeName: orderItem.variantSizeId.sizeId.sizeName,
+    colorName: orderItem.variantSizeId.variantId.colorId.colorName,
+    orderItemId: orderItem._id,
+  });
+});
 
 const wishListSchemaStructure = new mongoose.Schema({
   productId: {
@@ -2787,38 +2855,64 @@ app.get("/WishListPopulate", async (req, res) => {
   }
 });
 
-const complaintSchemaStructure = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "productcollection",
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "usercollection",
-    required: true,
-  },
-  complaintTitle: {
-    type: String,
-    required: true,
-  },
-  complaintDescription: {
-    type: String,
-    required: true,
-  },
-  complaintReply: {
-    type: String,
-  },
-  compalintStatus: {
-    type: String,
-    enum: ["Pending", "In Progress", "Resolved", "Rejected"],
-    default: "Pending",
-  },
-});
+const complaintSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "productcollection",
+      required: true,
+    },
 
-const Complaint = mongoose.model(
-  "complaintcollection",
-  complaintSchemaStructure
+    orderItemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "orderitemcollection",
+      required: true,
+    },
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "usercollection",
+      required: true,
+    },
+
+    complaintTitle: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    complaintDescription: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // 🔽 FILE / IMAGE UPLOADS
+    complaintAttachments: [
+      {
+        fileUrl: { type: String, required: true },   // path or cloud URL
+        fileType: { type: String },                   // image/png, image/jpeg, pdf
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+
+    complaintReply: {
+      type: String,
+      trim: true,
+    },
+
+    complaintStatus: {
+      type: String,
+      enum: ["Pending", "In Progress", "Resolved", "Rejected"],
+      default: "Pending",
+    },
+  },
+  { timestamps: true }
 );
+
+const Complaint = mongoose.model("complaintcollection", complaintSchema);
+
+
 
 app.post("/Complaint", async (req, res) => {
   try {
@@ -2944,7 +3038,7 @@ const ratingReviewSchemaStructure = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "orderitemcollection",
     required: true,
-    unique: true
+    unique: true,
   },
   ratingValue: {
     type: Number,
@@ -2955,7 +3049,7 @@ const ratingReviewSchemaStructure = new mongoose.Schema({
   reviewContent: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   status: {
     type: String,
@@ -3076,11 +3170,17 @@ app.get("/RatingReviewPopulate", async (req, res) => {
 //Rating & Review Api
 app.post("/review", async (req, res) => {
   try {
-    // const userId = req.user.id; // from auth middleware
-    const {userId, orderItemId, ratingValue, reviewContent } = req.body;
+    const { userId, orderItemId, ratingValue, reviewContent } = req.body;
 
-    // 1️⃣ Order item
-    const orderItem = await OrderItem.findById(orderItemId);
+    // 1️⃣ Order item with populated product
+    const orderItem = await OrderItem.findById(orderItemId).populate({
+      path: "variantSizeId",
+      populate: {
+        path: "variantId",
+        populate: { path: "productId" },
+      },
+    });
+
     if (!orderItem)
       return res.status(404).json({ message: "Order item not found" });
 
@@ -3092,18 +3192,20 @@ app.post("/review", async (req, res) => {
     if (!order || order.userId.toString() !== userId)
       return res.status(403).json({ message: "Unauthorized" });
 
-    if (order.orderStatus !== "paymentSuccess")
+    if (!["paymentSuccess", "partiallyCancelled"].includes(order.orderStatus))
       return res.status(400).json({ message: "Invalid order status" });
 
     // 3️⃣ Check existing review
-    const existingReview = await Review.findOne({ orderItemId });
+    const existingReview = await ReviewRating.findOne({ orderItemId });
     if (existingReview)
       return res.status(400).json({ message: "Already reviewed" });
 
     // 4️⃣ Create review
-    const review = await Review.create({
+    const productId = orderItem.variantSizeId.variantId.productId._id;
+
+    const review = await ReviewRating.create({
       userId,
-      productId: orderItem.productId,
+      productId,
       orderId: order._id,
       orderItemId,
       ratingValue,
@@ -3116,7 +3218,6 @@ app.post("/review", async (req, res) => {
     res.status(500).json({ message: "Failed to add review" });
   }
 });
-
 
 const categorySchemeStructure = new mongoose.Schema({
   categoryName: {
@@ -4138,10 +4239,19 @@ app.put("/ChangePassword/:id", async (req, res) => {
 //CREATE PAYMENT ORDER
 app.post("/create-order", async (req, res) => {
   try {
-    const { amount } = req.body;
+    let { amount } = req.body;
+
+    amount = Number(amount);
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    // Convert to paise & ensure integer
+    const amountInPaise = Math.round(amount * 100);
 
     const options = {
-      amount: amount * 100,
+      amount: amountInPaise,
       currency: "INR",
       receipt: `receipt_order_${Date.now()}`,
     };
