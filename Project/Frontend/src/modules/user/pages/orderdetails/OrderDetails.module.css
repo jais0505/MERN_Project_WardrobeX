@@ -800,3 +800,18 @@
 .helpIcon {
   font-size: 18px;
 }
+
+
+
+.complaintSubmittedBtn {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.complaintSubmittedBtn:hover {
+  background-color: #e0e0e0;
+}

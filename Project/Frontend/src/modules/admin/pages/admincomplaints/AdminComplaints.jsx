@@ -1,35 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { RiFilter2Line, RiChatForwardLine, RiCloseLine, RiCheckLine, RiUserSettingsLine } from 'react-icons/ri';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import styles from './AdminComplaints.module.css';
+import React, { useState, useEffect } from "react";
+import {
+  RiFilter2Line,
+  RiCloseLine,
+  RiCheckLine,
+} from "react-icons/ri";
+import axios from "axios";
+import { toast } from "react-toastify";
+import styles from "./AdminComplaints.module.css";
 
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(true);
 
-  // Update State for the detail view
-  const [reply, setReply] = useState('');
-  const [statusUpdate, setStatusUpdate] = useState('');
+  const [reply, setReply] = useState("");
+  const [statusUpdate, setStatusUpdate] = useState("");
 
   useEffect(() => {
     fetchAllComplaints();
   }, []);
 
   useEffect(() => {
-    if (filter === 'All') {
+    if (filter === "All") {
       setFilteredComplaints(complaints);
     } else {
-      setFilteredComplaints(complaints.filter(c => c.status === filter));
+      setFilteredComplaints(
+        complaints.filter((c) => c.complaintStatus === filter)
+      );
     }
   }, [filter, complaints]);
 
   const fetchAllComplaints = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/admin/complaints');
+      const res = await axios.get("http://127.0.0.1:5000/admin/complaints");
       setComplaints(res.data);
       setLoading(false);
     } catch (err) {
@@ -41,31 +46,36 @@ const AdminComplaints = () => {
 
   const handleSelect = (complaint) => {
     setSelectedComplaint(complaint);
-    setReply(complaint.adminReply || '');
-    setStatusUpdate(complaint.status);
+    setReply(complaint.complaintReply || "");
+    setStatusUpdate(complaint.complaintStatus);
   };
 
   const handleUpdate = async () => {
+    if (!selectedComplaint?._id) return toast.error("Complaint ID missing!");
+
     try {
-      await axios.put(`http://127.0.0.1:5000/admin/complaint/${selectedComplaint.complaintId}`, {
-        adminReply: reply,
-        status: statusUpdate
-      });
+      await axios.put(
+        `http://127.0.0.1:5000/admin/complaint/${selectedComplaint._id}`,
+        {
+          adminReply: reply,
+          status: statusUpdate,
+        }
+      );
       toast.success("Ticket Updated");
-      fetchAllComplaints(); // Refresh list
-      setSelectedComplaint(null); // Close panel
+      fetchAllComplaints();
+      setSelectedComplaint(null);
     } catch (err) {
       console.error(err);
       toast.error("Update failed");
     }
   };
 
-  if (loading) return <div className={styles.loader}>Accessing Database...</div>;
+  if (loading)
+    return <div className={styles.loader}>Accessing Database...</div>;
 
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.mainContent}>
-        {/* Header & Filters */}
         <header className={styles.header}>
           <div>
             <h1>Customer Complaints</h1>
@@ -73,19 +83,20 @@ const AdminComplaints = () => {
           </div>
           <div className={styles.filterBar}>
             <RiFilter2Line />
-            {['All', 'Pending', 'In Progress', 'Resolved', 'Rejected'].map(f => (
-              <button 
-                key={f} 
-                className={filter === f ? styles.activeFilter : ''}
-                onClick={() => setFilter(f)}
-              >
-                {f}
-              </button>
-            ))}
+            {["All", "Pending", "In Progress", "Resolved", "Rejected"].map(
+              (f) => (
+                <button
+                  key={f}
+                  className={filter === f ? styles.activeFilter : ""}
+                  onClick={() => setFilter(f)}
+                >
+                  {f}
+                </button>
+              )
+            )}
           </div>
         </header>
 
-        {/* Complaints Table */}
         <div className={styles.tableWrapper}>
           <table className={styles.complaintTable}>
             <thead>
@@ -99,8 +110,8 @@ const AdminComplaints = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredComplaints.map(c => (
-                <tr key={c.complaintId} onClick={() => handleSelect(c)}>
+              {filteredComplaints.map((c) => (
+                <tr key={c._id} onClick={() => handleSelect(c)}>
                   <td>
                     <div className={styles.userInfo}>
                       <span className={styles.userName}>{c.user.name}</span>
@@ -108,10 +119,14 @@ const AdminComplaints = () => {
                     </div>
                   </td>
                   <td>{c.product.name}</td>
-                  <td className={styles.titleCell}>{c.title}</td>
+                  <td className={styles.titleCell}>{c.complaintTitle}</td>
                   <td>
-                    <span className={`${styles.statusTag} ${styles[c.status.toLowerCase().replace(' ', '')]}`}>
-                      {c.status}
+                    <span
+                      className={`${styles.statusTag} ${
+                        styles[c.complaintStatus.toLowerCase().replace(" ", "")]
+                      }`}
+                    >
+                      {c.complaintStatus}
                     </span>
                   </td>
                   <td>{new Date(c.createdAt).toLocaleDateString()}</td>
@@ -125,19 +140,26 @@ const AdminComplaints = () => {
         </div>
       </div>
 
-      {/* Slide-in Detail Panel */}
       {selectedComplaint && (
-        <div className={styles.sidePanelOverlay} onClick={() => setSelectedComplaint(null)}>
-          <div className={styles.sidePanel} onClick={e => e.stopPropagation()}>
+        <div
+          className={styles.sidePanelOverlay}
+          onClick={() => setSelectedComplaint(null)}
+        >
+          <div
+            className={styles.sidePanel}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.panelHeader}>
               <h2>Ticket Details</h2>
-              <button onClick={() => setSelectedComplaint(null)}><RiCloseLine /></button>
+              <button onClick={() => setSelectedComplaint(null)}>
+                <RiCloseLine />
+              </button>
             </div>
 
             <div className={styles.panelBody}>
               <section className={styles.detailSection}>
                 <label>Complaint Description</label>
-                <p>{selectedComplaint.description}</p>
+                <p>{selectedComplaint.complaintDescription}</p>
               </section>
 
               <hr />
@@ -145,8 +167,8 @@ const AdminComplaints = () => {
               <section className={styles.updateSection}>
                 <div className={styles.inputGroup}>
                   <label>Update Status</label>
-                  <select 
-                    value={statusUpdate} 
+                  <select
+                    value={statusUpdate}
                     onChange={(e) => setStatusUpdate(e.target.value)}
                   >
                     <option value="Pending">Pending</option>
@@ -158,8 +180,8 @@ const AdminComplaints = () => {
 
                 <div className={styles.inputGroup}>
                   <label>Admin Reply</label>
-                  <textarea 
-                    value={reply} 
+                  <textarea
+                    value={reply}
                     onChange={(e) => setReply(e.target.value)}
                     placeholder="Type your response to the customer..."
                   />

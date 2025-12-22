@@ -3000,7 +3000,6 @@ app.put("/Complaint/:id", async (req, res) => {
 });
 
 // Populate Complaint
-
 app.get("/ComplaintPopulate", async (req, res) => {
   try {
     const complaint = await Complaint.find()
@@ -3017,6 +3016,204 @@ app.get("/ComplaintPopulate", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+//complaint creation
+app.post("/complaint/create/:orderItemId", async (req, res) => {
+  try {
+    const { orderItemId } = req.params;
+    const { userId, complaintTitle, complaintDescription } = req.body;
+
+    // 1️⃣ Validate Inputs
+    if (!userId || !complaintTitle || !complaintDescription) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    // 2️⃣ Check Order Item Exists
+    const orderItem = await OrderItem.findById(orderItemId).populate("orderId");
+
+    if (!orderItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Order item not found",
+      });
+    }
+
+    // 3️⃣ Check User Owns This Order
+    if (String(orderItem.orderId.userId) !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot raise complaint for this order",
+      });
+    }
+
+    // 4️⃣ Get Product ID (through Variant → Product)
+    const variantSize = await VariantSize.findById(orderItem.variantSizeId);
+    const variant = await Variant.findById(variantSize.variantId);
+    const productId = variant.productId;
+
+    // 5️⃣ Prevent Duplicate Complaint
+    const alreadyExists = await Complaint.findOne({ orderItemId });
+    if (alreadyExists) {
+      return res.status(400).json({
+        success: false,
+        message: "Complaint already raised for this order item",
+      });
+    }
+
+    // 6️⃣ Create Complaint
+    const complaint = new Complaint({
+      userId,
+      orderItemId,
+      productId,
+      complaintTitle,
+      complaintDescription,
+    });
+
+    await complaint.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Complaint registered successfully",
+      complaint,
+    });
+  } catch (err) {
+    console.log("Complaint Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: err.message,
+    });
+  }
+});
+
+//Get comlpaints using userId
+app.get("/complaint/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const complaints = await Complaint.find({ userId })
+      .populate({
+        path: "productId",
+        select: "productName productImage",
+      })
+      .populate({
+        path: "orderItemId",
+        select: "_id",
+      })
+      .sort({ createdAt: -1 });
+
+    // Ensure complaintReply is returned
+    const result = complaints.map(c => ({
+      _id: c._id,
+      productId: c.productId,
+      orderItemId: c.orderItemId,
+      complaintTitle: c.complaintTitle,
+      complaintDescription: c.complaintDescription,
+      complaintStatus: c.complaintStatus,
+      complaintReply: c.complaintReply || null, // <-- include reply
+      complaintAttachments: c.complaintAttachments,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+
+//Fetch all complaints for admin
+// GET /admin/complaints
+app.get("/admin/complaints", async (req, res) => {
+  try {
+    const complaints = await Complaint.find()
+      .populate({
+        path: "userId",
+        select: "userName userEmail",
+      })
+      .populate({
+        path: "productId",
+        select: "productName productImage",
+      })
+      .populate({
+        path: "orderItemId",
+        select: "_id",
+      })
+      .sort({ createdAt: -1 });
+
+    // Format response for front-end
+    const formatted = complaints.map((c) => ({
+      _id: c._id,
+      complaintTitle: c.complaintTitle,
+      complaintDescription: c.complaintDescription,
+      complaintStatus: c.complaintStatus,
+      complaintReply: c.complaintReply,
+      user: {
+        name: c.userId.userName,
+        email: c.userId.userEmail,
+      },
+      product: {
+        name: c.productId.productName,
+        image: c.productId.productImage,
+      },
+      orderItemId: c.orderItemId._id,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch complaints" });
+  }
+});
+
+// UPDATE complaint (reply / status)
+// PUT /admin/complaint/:id
+app.put("/admin/complaint/:id", async (req, res) => {
+  const { adminReply, status } = req.body;
+
+  if (!adminReply && !status) {
+    return res.status(400).json({ message: "Nothing to update" });
+  }
+
+  try {
+    const complaint = await Complaint.findByIdAndUpdate(
+      req.params.id,
+      { 
+        ...(adminReply !== undefined && { complaintReply: adminReply }),
+        ...(status !== undefined && { complaintStatus: status }),
+      },
+      { new: true }
+    );
+
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    res.json({
+      message: "Complaint updated successfully",
+      complaint,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update complaint" });
+  }
+});
+
+
+
+
+
+
+
+
+
 
 const ratingReviewSchemaStructure = new mongoose.Schema({
   userId: {

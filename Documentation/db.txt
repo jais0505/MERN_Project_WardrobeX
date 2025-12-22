@@ -1,0 +1,771 @@
+const adminSchemaStructure = new mongoose.Schema({
+  adminName: {
+    type: String,
+    required: true,
+  },
+  adminEmail: {
+    type: String,
+    required: true,
+  },
+  adminContact: {
+    type: String,
+    required: true,
+  },
+  adminPassword: {
+    type: String,
+    required: true,
+  },
+});
+
+const Admin = mongoose.model("admincollection", adminSchemaStructure);
+
+
+
+
+
+
+
+const shopSchemaStructure = new mongoose.Schema({
+  shopName: {
+    type: String,
+    required: true,
+  },
+  shopEmail: {
+    type: String,
+    required: true,
+  },
+  shopContact: {
+    type: String,
+    required: true,
+  },
+  shopPassword: {
+    type: String,
+    required: true,
+  },
+  shopAddress: {
+    type: String,
+    required: true,
+  },
+  shopImage: {
+    type: String,
+    required: true,
+  },
+  shopProof: {
+    type: String,
+    required: true,
+  },
+  PANNO: {
+    type: String,
+    required: true,
+  },
+  GSTNO: {
+    type: String,
+    required: true,
+  },
+  shopLocation: {
+    type: String,
+    required: true,
+  },
+  placeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "placecollection",
+    // required: true
+  },
+  shopStatus: {
+    type: String,
+    enum: ["pending", "rejected", "verified"],
+    default: "pending",
+  },
+});
+
+const Shop = mongoose.model("shopcollection", shopSchemaStructure);
+
+
+
+
+
+
+
+
+const userSchemaStructure = new mongoose.Schema({
+  userName: {
+    type: String,
+    required: true,
+  },
+  userEmail: {
+    type: String,
+    required: true,
+  },
+  userContact: {
+    type: String,
+    // required: true
+  },
+  userPassword: {
+    type: String,
+    required: true,
+  },
+  userAddress: {
+    type: String,
+    // required: true
+  },
+  userLocation: {
+    type: String,
+    required: true,
+  },
+  placeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "placecollection",
+    // required: true
+  },
+});
+
+const User = mongoose.model("usercollection", userSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const productSchemaStructure = new mongoose.Schema({
+  shopId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "shopcollection",
+    required: true,
+  },
+  productName: {
+    type: String,
+    required: true,
+  },
+  productDescription: {
+    type: String,
+    required: true,
+  },
+  subcategoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "subcategorycollection",
+    required: true,
+  },
+  productPrice: {
+    type: Number,
+    required: true,
+  },
+  fitId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "fitcollection",
+  },
+  materialId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "materialcollection",
+    required: true,
+  },
+  brandId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "brandcollection",
+    required: true,
+  },
+  typeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "typecollection",
+    required: true,
+  },
+  // Singel Image
+  productImage: {
+    type: String,
+    required: true,
+  },
+});
+
+const Product = mongoose.model("productcollection", productSchemaStructure);
+
+
+
+
+
+
+
+
+
+const variantSchemaStructure = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "productcollection",
+    required: true,
+  },
+  colorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "colorcollection",
+    required: true,
+  },
+});
+
+const Variant = mongoose.model("variantcollection", variantSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const variantSizeSchemaStructure = new mongoose.Schema({
+  variantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "variantcollection",
+    required: true,
+  },
+  sizeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "sizecollection",
+    required: true,
+  },
+});
+
+variantSizeSchemaStructure.index({ variantId: 1, sizeId: 1 }, { unique: true });
+
+const VariantSize = mongoose.model(
+  "variantsizecollection",
+  variantSizeSchemaStructure
+);
+
+
+
+
+
+
+const imageSchemaStructure = new mongoose.Schema({
+  productImage: {
+    type: String,
+    required: true,
+  },
+  variantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "variantcollection",
+    required: true,
+  },
+});
+
+const Image = mongoose.model("imagecollection", imageSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const stockSchemaStructure = new mongoose.Schema({
+  variantSizeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "variantsizecollection",
+    required: true,
+  },
+  stockQuantity: {
+    type: Number,
+    required: true,
+  },
+  stockDate: {
+    type: Date,
+    default: Date.now,
+  },
+  stockDescription: {
+    type: String,
+    required: true,
+  },
+});
+
+const Stock = mongoose.model("stockcollection", stockSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+
+
+const orderSchemaStruture = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "usercollection",
+    required: true,
+  },
+  userName: {
+    type: String,
+  },
+  contactNo: {
+    type: String,
+  },
+  deliveryAddress: {
+    type: String,
+  },
+  totalAmount: {
+    type: Number,
+    default: 0,
+  },
+  refundedAmount: {
+    type: Number,
+    default: 0,
+  },
+
+  orderDate: {
+    type: Date,
+    default: Date.now,
+    required: true,
+  },
+  orderStatus: {
+    type: String,
+    enum: [
+      "inCart",
+      "buyNow",
+      "paymentPending",
+      "paymentSuccess",
+      "partiallyCancelled",
+      "cancelled",
+      "refunded",
+    ],
+    default: "inCart",
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null,
+  },
+});
+
+const Order = mongoose.model("ordercollection", orderSchemaStruture);
+
+
+
+
+
+
+
+
+
+
+
+
+const orderItemSchemaStructure = new mongoose.Schema({
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ordercollection",
+    required: true,
+  },
+  variantSizeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "variantsizecollection",
+    required: true,
+  },
+  orderItemPrice: {
+    type: Number,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    default: 1,
+    min: 1,
+  },
+  orderItemStatus: {
+    type: String,
+    enum: [
+      "processing",
+      "packed",
+      "shipped",
+      "outForDelivery",
+      "delivered",
+      "cancelled",
+    ],
+    default: "processing",
+  },
+  cancellationReason: {
+    type: String,
+    default: null,
+  },
+  cancelledAt: {
+    type: Date,
+    default: null,
+  },
+  refundStatus: {
+    type: String,
+    enum: ["notInitiated", "initiated", "approved", "completed"],
+    default: "notInitiated",
+  },
+});
+
+const OrderItem = mongoose.model(
+  "orderitemcollection",
+  orderItemSchemaStructure
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const wishListSchemaStructure = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "productcollection",
+    required: true,
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "usercollection",
+    required: true,
+  },
+  addedDate: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const WishList = mongoose.model("wishlistcollection", wishListSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const complaintSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "productcollection",
+      required: true,
+    },
+
+    orderItemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "orderitemcollection",
+      required: true,
+    },
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "usercollection",
+      required: true,
+    },
+
+    complaintTitle: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    complaintDescription: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // 🔽 FILE / IMAGE UPLOADS
+    complaintAttachments: [
+      {
+        fileUrl: { type: String, required: true },   // path or cloud URL
+        fileType: { type: String },                   // image/png, image/jpeg, pdf
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+
+    complaintReply: {
+      type: String,
+      trim: true,
+    },
+
+    complaintStatus: {
+      type: String,
+      enum: ["Pending", "In Progress", "Resolved", "Rejected"],
+      default: "Pending",
+    },
+  },
+  { timestamps: true }
+);
+
+const Complaint = mongoose.model("complaintcollection", complaintSchema);
+
+
+
+
+
+
+
+
+
+
+
+const ratingReviewSchemaStructure = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "usercollection",
+    required: true,
+  },
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "productcollection",
+    required: true,
+  },
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ordercollection",
+    required: true,
+  },
+  orderItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "orderitemcollection",
+    required: true,
+    unique: true,
+  },
+  ratingValue: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+  reviewContent: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  status: {
+    type: String,
+    enum: ["active", "hidden"],
+    default: "active",
+  },
+  ratingReviewDate: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const ReviewRating = mongoose.model(
+  "ratingreviewcollection",
+  ratingReviewSchemaStructure
+);
+
+
+
+
+
+
+
+
+const categorySchemeStructure = new mongoose.Schema({
+  categoryName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Category = mongoose.model("categorycollection", categorySchemeStructure);
+
+
+
+
+
+
+
+
+const subcategorySchemaStructure = new mongoose.Schema({
+  subcategoryName: {
+    type: String,
+    required: true,
+  },
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "categorycollection",
+    required: true,
+  },
+});
+
+const Subcategory = mongoose.model(
+  "subcategorycollection",
+  subcategorySchemaStructure
+);
+
+
+
+
+
+
+
+const typeSchemaStructure = new mongoose.Schema({
+  typeName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Type = mongoose.model("typecollection", typeSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const sizeSchemaStructure = new mongoose.Schema({
+  sizeName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Size = mongoose.model("sizecollection", sizeSchemaStructure);
+
+
+
+
+
+
+
+
+
+const fitSchemaStructure = new mongoose.Schema({
+  fitName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Fit = mongoose.model("fitcollection", fitSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+const colorSchemaStructure = new mongoose.Schema({
+  colorName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Color = mongoose.model("colorcollection", colorSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+
+
+const materialSchemaStructure = new mongoose.Schema({
+  materialName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Material = mongoose.model("materialcollection", materialSchemaStructure);
+
+
+
+
+
+
+
+
+
+const brandSchemaStructure = new mongoose.Schema({
+  brandName: {
+    type: String,
+    required: true,
+  },
+});
+
+const Brand = mongoose.model("brandcollection", brandSchemaStructure);
+
+
+
+
+
+
+
+
+const districtSchemaStructure = new mongoose.Schema({
+  districtName: {
+    type: String,
+    required: true,
+  },
+});
+
+const District = mongoose.model("districtcollection", districtSchemaStructure);
+
+
+
+
+
+
+
+
+const placeSchemaStructure = new mongoose.Schema({
+  placeName: {
+    type: String,
+    required: true,
+  },
+  districtId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "districtcollection",
+    required: true,
+  },
+});
+
+const Place = mongoose.model("placecollection", placeSchemaStructure);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

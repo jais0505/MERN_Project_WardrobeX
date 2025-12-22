@@ -14,71 +14,41 @@ const CreateComplaint = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Data from OrderDetails
+  // Get orderItemId passed from previous page
   const { orderItemId } = location.state || {};
   const userId = sessionStorage.getItem("uid");
-  
+
+  // Debug
   useEffect(() => {
-  console.log("CreateComplaint Loaded");
-  console.log("orderItemId:", orderItemId);
-  console.log("userId:", userId);
-}, []);
+    console.log("CreateComplaint Loaded");
+    console.log("orderItemId:", orderItemId);
+    console.log("userId:", userId);
+  }, []);
 
-  const [context, setContext] = useState(null);
-  const [loadingContext, setLoadingContext] = useState(true);
+  // Context Data
 
-  useEffect(() => {
-    if (!orderItemId) {
-      navigate("/user/myorders");
-      return;
-    }
-
-    const fetchContext = async () => {
-      try {
-        const res = await axios.get(
-          `http://127.0.0.1:5000/complaint/context/${orderItemId}`
-        );
-
-        setContext(res.data);
-      } catch (err) {
-        console.error("Error fetching complaint context:", err);
-        toast.error("Unable to load complaint details");
-        // navigate(-1);
-      } finally {
-        setLoadingContext(false);
-      }
-    };
-
-    fetchContext();
-  }, [orderItemId]);
-
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
     description: "",
   });
-  const [selectedImage, setSelectedImage] = useState(null);
+
+  // const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Security check: Redirect if no order data is present
-  useEffect(() => {
-    if (!orderItemId) {
-      toast.error("No order selected. Redirecting...");
-      navigate("/user/myorders");
-    }
-  }, [orderItemId, navigate]);
+  // Image Upload
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file && file.size > 2 * 1024 * 1024) {
+  //     toast.warning("Image size should be less than 2MB");
+  //     return;
+  //   }
+  //   setSelectedImage(file);
+  // };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.size > 2 * 1024 * 1024) {
-      toast.warning("Image size should be less than 2MB");
-      return;
-    }
-    setSelectedImage(file);
-  };
-
+  // Submit Complaint
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userId = sessionStorage.getItem("uid");
 
     if (!formData.title || !formData.description) {
       toast.error("Please fill in all required fields");
@@ -88,15 +58,16 @@ const CreateComplaint = () => {
     setIsSubmitting(true);
 
     try {
-      // Using FormData in case you decide to support image uploads to the backend
       const payload = {
         userId,
-        orderItemId,
         complaintTitle: formData.title,
         complaintDescription: formData.description,
       };
 
-      await axios.post("http://127.0.0.1:5000/complaint/create", payload);
+      await axios.post(
+        `http://127.0.0.1:5000/complaint/create/${orderItemId}`,
+        payload
+      );
 
       toast.success("Complaint submitted successfully");
       navigate("/user/mycomplaints");
@@ -123,26 +94,23 @@ const CreateComplaint = () => {
         </header>
 
         <form onSubmit={handleSubmit} className={styles.complaintForm}>
-          {/* Read-Only Context Section */}
+          {/* Context UI */}
           <div className={styles.contextBox}>
-            <div className={styles.contextItem}>
-              <label>Product</label>
-              <p>{loadingContext ? "Loading..." : context?.productName}</p>
-            </div>
+
 
             <div className={styles.contextItem}>
               <label>Order Item</label>
-              <p>#{orderItemId.slice(-8)}</p>
+              <p>#{orderItemId?.slice(-8)}</p>
             </div>
-          </div>  
+          </div>
 
-          {/* Input: Title */}
+          {/* Title */}
           <div className={styles.inputGroup}>
             <label htmlFor="title">Complaint Title</label>
             <input
               id="title"
               type="text"
-              placeholder="Briefly describe the issue (e.g., Damaged Product)"
+              placeholder="Damaged Product / Wrong Item / Missing Parts"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -151,12 +119,12 @@ const CreateComplaint = () => {
             />
           </div>
 
-          {/* Input: Description */}
+          {/* Description */}
           <div className={styles.inputGroup}>
             <label htmlFor="description">Detailed Description</label>
             <textarea
               id="description"
-              placeholder="Please provide as much detail as possible..."
+              placeholder="Explain what went wrong..."
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -165,9 +133,10 @@ const CreateComplaint = () => {
             />
           </div>
 
-          {/* Optional: Image Upload UI */}
+          {/* Image Upload
           <div className={styles.imageUploadSection}>
             <label>Attachments (Optional)</label>
+
             {!selectedImage ? (
               <label className={styles.uploadPlaceholder}>
                 <input
@@ -191,9 +160,9 @@ const CreateComplaint = () => {
                 </button>
               </div>
             )}
-          </div>
+          </div> */}
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             className={styles.submitBtn}

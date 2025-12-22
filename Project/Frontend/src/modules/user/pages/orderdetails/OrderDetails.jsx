@@ -20,6 +20,34 @@ const OrderDetails = () => {
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [complaintsMap, setComplaintsMap] = useState({});
+
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const userId = sessionStorage.getItem("uid");
+        const res = await axios.get(
+          `http://127.0.0.1:5000/complaint/user/${userId}`
+        );
+
+        const map = {};
+        res.data.forEach((complaint) => {
+          map[complaint.orderItemId._id] = complaint;
+        });
+        setComplaintsMap(map);
+        console.log("complaints map ready:", map);
+      } catch (error) {
+        console.error("Error fetching complaints:", error);
+      }
+    };
+
+    fetchComplaints();
+  }, []);
+
+  const hasComplaint = (orderItemId) => {
+    return complaintsMap[orderItemId] !== undefined;
+  };
+
   const [cancelModal, setCancelModal] = useState({
     isOpen: false,
     orderItemId: null,
@@ -199,6 +227,14 @@ const OrderDetails = () => {
     }
   };
 
+  if (loading || !complaintsMap) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>Loading order details...</div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
@@ -292,23 +328,27 @@ const OrderDetails = () => {
                         {/* Add this inside the div with className={styles.productPricing} */}
 
                         {(orderData.orderStatus === "paymentSuccess" ||
-                          product.itemStatus === "delivered") && (
-                          <button
-                            className={styles.needHelpBtn}
-                            onClick={() => {
-                              console.log("orderItemId:", product.orderItemId);
-                      
-                              navigate(`/user/complaints/new`, {
-                                state: {
-                                  orderItemId: product.orderItemId,
-                                },
-                              });
-                            }}
-                          >
-                            <RiQuestionLine className={styles.helpIcon} />
-                            <span>Need Help?</span>
-                          </button>
-                        )}
+                          product.itemStatus === "delivered") &&
+                          (hasComplaint(product.orderItemId) ? (
+                            <button
+                              className={styles.complaintSubmittedBtn}
+                              onClick={() => navigate("/user/mycomplaints")}
+                            >
+                              Complaint Submitted
+                            </button>
+                          ) : (
+                            <button
+                              className={styles.needHelpBtn}
+                              onClick={() =>
+                                navigate(`/user/complaints/new`, {
+                                  state: { orderItemId: product.orderItemId },
+                                })
+                              }
+                            >
+                              <RiQuestionLine className={styles.helpIcon} />
+                              <span>Need Help?</span>
+                            </button>
+                          ))}
 
                         <div className={styles.itemPrice}>₹{product.price}</div>
                         {product.quantity > 1 && (
