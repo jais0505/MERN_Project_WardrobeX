@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import styles from './Product.module.css'
 import { BsHeart, BsHeartFill } from 'react-icons/bs'
+import { useNavigate } from 'react-router'
+import { toast } from 'react-toastify'
 
 const Product = () => {
   const [activeCategory, setActiveCategory] = useState('MAN')
@@ -52,6 +54,13 @@ const Product = () => {
     }))
   }
 
+  const navigate = useNavigate();
+
+  const handleBuynow = () => {
+    toast.info("Login to buy products");
+    navigate('/login');
+  }
+
   return (
     <div className={styles.products_container}>
       <div className={styles.products_header}>
@@ -99,8 +108,8 @@ const Product = () => {
               </button>
               
               {/* Add to Cart Button */}
-              <button className={styles.add_to_cart_btn}>
-                ADD TO CART
+              <button className={styles.add_to_cart_btn} onClick={() => handleBuynow()}>
+                Buy Now
               </button>
             </div>
 

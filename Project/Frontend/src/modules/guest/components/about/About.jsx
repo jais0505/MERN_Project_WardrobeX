@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router';
 import styles from './About.module.css';
 
 const About = () => {
+  const navigate = useNavigate()
   return (
     <div className={styles.container}>
       {/* Hero Section */}
@@ -27,7 +29,9 @@ const About = () => {
                 creating a seamless marketplace where style meets convenience.
               </p>
             </div>
-            <div className={styles.imageBox}></div>
+            <div className={styles.imageBox}>
+              <img src="OurStory.png" alt="" />
+            </div>
           </div>
         </div>
       </section>
@@ -110,7 +114,7 @@ const About = () => {
             <p className={styles.ctaText}>
               Join thousands of men who trust WARDROBE for their fashion needs.
             </p>
-            <button className={styles.ctaButton}>Start Shopping</button>
+            <button className={styles.ctaButton} onClick={() => navigate('/login')}>Start Shopping</button>
           </div>
         </div>
       </section>

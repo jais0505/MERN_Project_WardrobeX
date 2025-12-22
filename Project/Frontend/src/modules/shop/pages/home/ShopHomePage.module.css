@@ -1,4 +1,13 @@
+.container{
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 .home_content{
     background-color: #f9fafb;
     margin-top: 70px;
+    /* flex: 1; */
+    
 }

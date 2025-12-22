@@ -4,6 +4,8 @@ import Navbar from '../../components/navbar/Navbar'
 import UserRoutes from '../../../../routes/UserRoutes'
 import HeroBanner from '../../components/herobanner/HeroBanner'
 import Footer from '../../components/footer/Footer'
+import ViewProducts from '../viewProducts/ViewProducts'
+import ProductsGrid from '../../components/productsgrid/ProductsGrid'
 
 const UserHomePage = () => {
    const location = useLocation();
@@ -15,6 +17,7 @@ const UserHomePage = () => {
         <div className={styles.home_content}>
           <UserRoutes />
           { isHome && <HeroBanner />}
+          { isHome && <ViewProducts />}
         </div>
         <Footer />
       </div>
