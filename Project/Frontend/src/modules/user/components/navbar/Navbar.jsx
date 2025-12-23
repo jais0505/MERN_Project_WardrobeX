@@ -1,23 +1,33 @@
 import styles from './Navbar.module.css'
 import { BsCart3 } from 'react-icons/bs'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { IoMdSearch } from 'react-icons/io'
 import { HiMenu, HiX } from 'react-icons/hi'
 import { CgProfile } from 'react-icons/cg'
 import { FaBell, FaBox, FaGift, FaHeart, FaRegHeart, FaStar, FaTag, FaUser } from 'react-icons/fa6'
 import { TbCoinRupeeFilled } from 'react-icons/tb'
 import { IoLogOutOutline } from 'react-icons/io5'
+import { toast } from 'react-toastify'
 
 const Navbar = () => {
   const [menu, setMenu] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const userName = sessionStorage.getItem('userName');
 
+  const navigate =  useNavigate();
+
   const handleMenuClick = (menuItem) => {
     setMenu(menuItem);
     setMobileMenuOpen(false);
   };
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    toast.info("Logged out successfully");
+   navigate('/login', { replace : true})
+    
+  }
 
   return (
     <div className={styles.navbar}>
@@ -88,7 +98,7 @@ const Navbar = () => {
 
             <div className={styles.dropdown_divider}></div>
 
-            <button className={styles.dropdown_item} onClick={() => console.log('Logout')}>
+            <button className={styles.dropdown_item} onClick={handleLogout}>
               <IoLogOutOutline className={styles.dropdown_icon} />
               <span>Logout</span>
             </button>
