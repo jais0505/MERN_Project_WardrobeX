@@ -5,11 +5,11 @@ const UserProtected = ({ children }) => {
 
   useEffect(() => {
     if (!uid) {
-      window.location.replace("/login");   // prevents back navigation
+      window.location.replace("/login");
     }
   }, [uid]);
 
-  if (!uid) return null;   // don't flash UI
+  if (!uid) return null;   
 
   return children;
 };

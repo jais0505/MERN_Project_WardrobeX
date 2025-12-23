@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const app = express();
 const cors = require("cors");
 const mailer = require("nodemailer");
@@ -624,7 +625,24 @@ const userSchemaStructure = new mongoose.Schema({
   },
 });
 
+userSchemaStructure.pre("save", async function (next) {
+  if(!this.isModified('userPassword')) return next();
+
+  try{
+    const salt = await bcrypt.genSalt(10);
+    this.userPassword = await bcrypt.hash(this.userPassword, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+userSchemaStructure.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.userPassword);
+}
+
 const User = mongoose.model("usercollection", userSchemaStructure);
+
 
 app.post("/User", async (req, res) => {
   try {
@@ -4364,13 +4382,20 @@ app.get("/PlacePopulate", async (req, res) => {
 //-------Login-------
 app.post("/Login", async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ userEmail: email, userPassword: password });
+  const user = await User.findOne({ userEmail: email });
+
   const admin = await Admin.findOne({
     adminEmail: email,
     adminPassword: password,
   });
   const shop = await Shop.findOne({ shopEmail: email, shopPassword: password });
   if (user) {
+    const isMatch = await user.comparePassword(password);
+
+    if(!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
     return res.send({
       role: "user",
       id: user._id,
