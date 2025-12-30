@@ -15,6 +15,7 @@ import ShopDetails from '../modules/admin/pages/shopDetails/ShopDetails'
 import Refunds from '../modules/admin/pages/refunds/Refunds'
 import AdminComplaints from '../modules/admin/pages/admincomplaints/AdminComplaints'
 import AdminProtected from '../modules/admin/components/AdminProtected'
+import AdminProfile from '../modules/admin/pages/adminprofile/AdminProfile'
 
 const AdminRoutes = () => (
   <Routes>
@@ -104,6 +105,12 @@ const AdminRoutes = () => (
     <Route path="/refunds" element={
       <AdminProtected>
         <Refunds />
+      </AdminProtected>
+    } />
+
+     <Route path="/profile" element={
+      <AdminProtected>
+        <AdminProfile />
       </AdminProtected>
     } />
   </Routes>

@@ -100,6 +100,24 @@ const adminSchemaStructure = new mongoose.Schema({
   },
 });
 
+adminSchemaStructure.pre("save", async function (next) {
+  if (!this.isModified("adminPassword")) return next();
+
+  try{
+    const salt = await bcrypt.genSalt(10);
+    this.adminPassword = await bcrypt.hash(this.adminPassword, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminSchemaStructure.methods.comparePassword = async function (
+  candidatePassword
+) {
+  return await bcrypt.compare(candidatePassword, this.adminPassword);
+}
+
 const Admin = mongoose.model("admincollection", adminSchemaStructure);
 
 app.post("/Admin", async (req, res) => {
@@ -249,6 +267,25 @@ const shopSchemaStructure = new mongoose.Schema({
     default: "pending",
   },
 });
+
+shopSchemaStructure.pre("save", async function (next) {
+  if (!this.isModified("shopPassword")) return next();
+
+  try{
+    const salt = await bcrypt.genSalt(10);
+    this.shopPassword = await bcrypt.hash(this.shopPassword, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+shopSchemaStructure.methods.comparePassword = async function (
+  candidatePassword
+) {
+  return await bcrypt.compare(candidatePassword, this.shopPassword);
+};
+
 
 const Shop = mongoose.model("shopcollection", shopSchemaStructure);
 
@@ -4500,13 +4537,13 @@ app.get("/PlacePopulate", async (req, res) => {
 //-------Login-------
 app.post("/Login", async (req, res) => {
   const { email, password } = req.body;
+
   const user = await User.findOne({ userEmail: email });
 
-  const admin = await Admin.findOne({
-    adminEmail: email,
-    adminPassword: password,
-  });
-  const shop = await Shop.findOne({ shopEmail: email, shopPassword: password });
+  const admin = await Admin.findOne({adminEmail: email});
+
+  const shop = await Shop.findOne({ shopEmail: email });
+
   if (user) {
     const isMatch = await user.comparePassword(password);
 
@@ -4521,6 +4558,12 @@ app.post("/Login", async (req, res) => {
       message: "Login successful",
     });
   } else if (admin) {
+    const isMatch = await admin.comparePassword(password);
+
+    if(!isMatch) {
+      return res.status(401).json({message: "Invalid email or password" })
+    }
+
     return res.send({
       role: "admin",
       id: admin._id,
@@ -4528,6 +4571,12 @@ app.post("/Login", async (req, res) => {
       message: "Login successful",
     });
   } else if (shop) {
+    const isMatch = await shop.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({message: "Invalid email or password"});
+    }
+
     if (shop.shopStatus === "verified") {
       return res.send({
         role: "shop",
