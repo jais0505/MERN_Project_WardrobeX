@@ -101,3 +101,24 @@
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
+
+.forgotPasswordWrapper {
+  width: 90%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.5rem;
+}
+
+.forgotLink {
+  font-size: 0.8rem;
+  color: #6b7280; /* Subtle gray */
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.forgotLink:hover {
+  color: black;
+  text-decoration: underline;
+}

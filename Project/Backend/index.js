@@ -610,6 +610,12 @@ const userSchemaStructure = new mongoose.Schema({
     type: String,
     required: true,
   },
+  resetToken: {
+    type: String,
+  },
+  resetTokenExpiry: {
+    type: Date,
+  },
   userAddress: {
     type: String,
     // required: true
@@ -626,9 +632,9 @@ const userSchemaStructure = new mongoose.Schema({
 });
 
 userSchemaStructure.pre("save", async function (next) {
-  if(!this.isModified('userPassword')) return next();
+  if (!this.isModified("userPassword")) return next();
 
-  try{
+  try {
     const salt = await bcrypt.genSalt(10);
     this.userPassword = await bcrypt.hash(this.userPassword, salt);
     next();
@@ -637,12 +643,13 @@ userSchemaStructure.pre("save", async function (next) {
   }
 });
 
-userSchemaStructure.methods.comparePassword = async function (candidatePassword) {
+userSchemaStructure.methods.comparePassword = async function (
+  candidatePassword
+) {
   return await bcrypt.compare(candidatePassword, this.userPassword);
-}
+};
 
 const User = mongoose.model("usercollection", userSchemaStructure);
-
 
 app.post("/User", async (req, res) => {
   try {
@@ -770,6 +777,132 @@ app.put("/User/:id", async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
+  }
+});
+
+app.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ userEmail: email });
+    if (!user) {
+      console.log("User with this email does not exist", email);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 1000 * 60 * 15; // 15 mins
+    await user.save();
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+    // ✨ HTML EMAIL (your style)
+    const content = `
+<html>
+<head>
+<title>Password Reset</title>
+<style>
+.container{
+ width:90%;
+ max-width:600px;
+ margin:0 auto;
+ padding:20px;
+ background:#f2f2f2;
+ font-family:Arial;
+}
+.box{
+ background:#fff;
+ padding:25px;
+ border-radius:10px;
+ text-align:center;
+}
+.title{
+ font-size:22px;
+ font-weight:bold;
+}
+.link{
+ margin-top:15px;
+ font-size:16px;
+}
+.button{
+ display:inline-block;
+ margin-top:15px;
+ padding:10px 20px;
+ background:#007bff;
+ color: #fff;
+ border-radius:5px;
+ text-decoration:none;
+ font-weight:bold;
+}
+.note{
+ font-size:13px;
+ color:#777;
+ margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="box">
+<div class="title">Password Reset Request</div>
+<p>You requested to reset your password.</p>
+
+<div class="link">
+Click the button below to reset your password:
+</div>
+
+<a class="button" href="${resetLink}" target="_blank">
+Reset Password
+</a>
+
+<p class="note">
+If you didn’t request this, just ignore this mail.<br>
+This link is valid for 15 minutes.
+</p>
+</div>
+</div>
+</body>
+</html>
+`;
+
+    // ⛳ YOUR FUNCTION
+    sendEmail(user.userEmail, content, "Reset Password");
+
+    res.json({ message: "Reset link sent to your email" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.post("/reset-password/:token", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { newPassword } = req.body;
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    user.userPassword = newPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
+    await user.save();
+
+    res.json({ message: "Password Reset Successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
@@ -937,14 +1070,13 @@ app.get("/Product/:id", async (req, res) => {
 
     if (!product) {
       return res.send({ message: "Product not found" });
-    } 
-    
+    }
+
     // Fetch reviews for this product
     const reviews = await ReviewRating.find({ productId: product._id })
       .sort({ reviewDate: -1 }) // newest first
-      .limit(5)                 // latest 5 reviews
+      .limit(5) // latest 5 reviews
       .populate("userId", "userName"); // get user name
-
 
     // Calculate average rating
     const totalReviews = reviews.length;
@@ -1077,10 +1209,6 @@ app.put("/Product/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
-
-
-
 
 const variantSchemaStructure = new mongoose.Schema({
   productId: {
@@ -1881,7 +2009,9 @@ app.get("/order/details/:orderId", async (req, res) => {
     );
 
     const orderItemIds = orderItems.map((item) => item._id);
-    const reviews = await ReviewRating.find({ orderItemId: { $in: orderItemIds } });
+    const reviews = await ReviewRating.find({
+      orderItemId: { $in: orderItemIds },
+    });
 
     const reviewMap = {};
     reviews.forEach((r) => {
@@ -2908,8 +3038,8 @@ const complaintSchema = new mongoose.Schema(
     // 🔽 FILE / IMAGE UPLOADS
     complaintAttachments: [
       {
-        fileUrl: { type: String, required: true },   // path or cloud URL
-        fileType: { type: String },                   // image/png, image/jpeg, pdf
+        fileUrl: { type: String, required: true }, // path or cloud URL
+        fileType: { type: String }, // image/png, image/jpeg, pdf
         uploadedAt: { type: Date, default: Date.now },
       },
     ],
@@ -2929,8 +3059,6 @@ const complaintSchema = new mongoose.Schema(
 );
 
 const Complaint = mongoose.model("complaintcollection", complaintSchema);
-
-
 
 app.post("/Complaint", async (req, res) => {
   try {
@@ -3123,7 +3251,7 @@ app.get("/complaint/user/:userId", async (req, res) => {
       .sort({ createdAt: -1 });
 
     // Ensure complaintReply is returned
-    const result = complaints.map(c => ({
+    const result = complaints.map((c) => ({
       _id: c._id,
       productId: c.productId,
       orderItemId: c.orderItemId,
@@ -3142,8 +3270,6 @@ app.get("/complaint/user/:userId", async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 });
-
-
 
 //Fetch all complaints for admin
 // GET /admin/complaints
@@ -3203,7 +3329,7 @@ app.put("/admin/complaint/:id", async (req, res) => {
   try {
     const complaint = await Complaint.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         ...(adminReply !== undefined && { complaintReply: adminReply }),
         ...(status !== undefined && { complaintStatus: status }),
       },
@@ -3223,15 +3349,6 @@ app.put("/admin/complaint/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to update complaint" });
   }
 });
-
-
-
-
-
-
-
-
-
 
 const ratingReviewSchemaStructure = new mongoose.Schema({
   userId: {
@@ -4392,7 +4509,7 @@ app.post("/Login", async (req, res) => {
   if (user) {
     const isMatch = await user.comparePassword(password);
 
-    if(!isMatch) {
+    if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
@@ -4437,15 +4554,16 @@ app.put("/ChangePassword/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const { currentPassword, newPassword } = req.body;
-
     const user = await User.findById(id);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (currentPassword !== user.userPassword) {
-      return res.status(404).json({ mesasge: "Current password is incorrect" });
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
     }
 
     user.userPassword = newPassword;

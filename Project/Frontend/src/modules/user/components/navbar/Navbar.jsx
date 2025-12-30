@@ -105,7 +105,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <Link to="/user/profilesettings/wishlist" className={styles.nav_link}>
+        <Link to="/user/wishlist" className={styles.nav_link}>
           <FaRegHeart className={styles.wishlist_icon} />
         </Link>
 

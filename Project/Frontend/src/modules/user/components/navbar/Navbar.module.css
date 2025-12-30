@@ -5,11 +5,11 @@
     padding: 16px 40px;
     box-shadow: 0 .5px 3px gray;
     background: white;
-    position: relative;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-
+    z-index: 1000;
     
 }
 
