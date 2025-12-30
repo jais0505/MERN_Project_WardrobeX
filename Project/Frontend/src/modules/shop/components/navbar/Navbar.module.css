@@ -82,9 +82,13 @@
 .navIocns{
   font-size: 24px;
 }
+.logoutIcons{
+  font-size: 24px;
+}
 
 .searchButton,
-.cartButton {
+.cartButton,
+.logoutButton {
   /* width: 44px;
   height: 44px; */
   background: none;

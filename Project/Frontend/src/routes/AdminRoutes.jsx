@@ -14,24 +14,98 @@ import Place from '../modules/admin/pages/place/Place'
 import ShopDetails from '../modules/admin/pages/shopDetails/ShopDetails'
 import Refunds from '../modules/admin/pages/refunds/Refunds'
 import AdminComplaints from '../modules/admin/pages/admincomplaints/AdminComplaints'
+import AdminProtected from '../modules/admin/components/AdminProtected'
 
 const AdminRoutes = () => (
   <Routes>
-    <Route index element={<DashboardHero />} /> 
-    <Route path="/district" element={<District />} />
-    <Route path="/place" element={<Place />} />
-    <Route path="/category" element={<Category />} />
-    <Route path="/subcategory" element={<Subcategory />} />
-    <Route path="/brand" element={<Brand />} />
-    <Route path="/type" element={<Type />} />
-    <Route path="/size" element={<Size />} />
-    <Route path="/fit" element={<Fit />} />
-    <Route path="/color" element={<Color />} />
-    <Route path="/user" element={<User />} />
-    <Route path="/shop" element={<Shop />} />
-    <Route path="/shop/:id" element={<ShopDetails />} />
-    <Route path="/complaint" element={<AdminComplaints />} />
-    <Route path="/refunds" element={<Refunds />} />
+    <Route index element={
+      <AdminProtected>
+        <DashboardHero /> 
+      </AdminProtected>
+    } /> 
+
+    <Route path="/district" element={
+      <AdminProtected>
+        <District />
+      </AdminProtected>
+    } />
+
+    <Route path="/place" element={
+      <AdminProtected>
+        <Place />
+      </AdminProtected>
+    } />
+
+    <Route path="/category" element={
+      <AdminProtected>
+        <Category />
+      </AdminProtected>
+    } />
+
+    <Route path="/subcategory" element={
+      <AdminProtected>
+        <Subcategory />
+      </AdminProtected>
+    } />
+
+    <Route path="/brand" element={
+      <AdminProtected>
+        <Brand />
+      </AdminProtected>
+    } />
+    <Route path="/type" element={
+      <AdminProtected>
+        <Type />
+      </AdminProtected>
+    } />
+
+    <Route path="/size" element={
+      <AdminProtected>
+        <Size />
+      </AdminProtected>
+    } />
+
+    <Route path="/fit" element={
+      <AdminProtected>
+        <Fit />
+      </AdminProtected>
+    } />
+
+    <Route path="/color" element={
+      <AdminProtected>
+        <Color />
+      </AdminProtected>
+    } />
+
+    <Route path="/user" element={
+      <AdminProtected>
+        <User />
+      </AdminProtected>
+    } />
+
+    <Route path="/shop" element={
+      <AdminProtected>
+        <Shop />
+      </AdminProtected>
+    } />
+
+    <Route path="/shop/:id" element={
+      <AdminProtected>
+        <ShopDetails />
+      </AdminProtected>
+    } />
+
+    <Route path="/complaint" element={
+      <AdminProtected>
+        <AdminComplaints />
+      </AdminProtected>
+    } />
+
+    <Route path="/refunds" element={
+      <AdminProtected>
+        <Refunds />
+      </AdminProtected>
+    } />
   </Routes>
 )
 

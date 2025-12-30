@@ -10,22 +10,75 @@ import ManageStock from "../modules/shop/pages/manageStock/ManageStock"
 import ShopProfile from "../modules/shop/pages/shopprofile/ShopProfile"
 import ShopOrders from "../modules/shop/pages/shoporders/ShopOrders"
 import OrderDetails from "../modules/shop/pages/orderdetails/OrderDetails"
+import ShopProtected from "../modules/shop/components/ShopProtected"
 
 
 const ShopRoutes = () => {
     return (
         <Routes>
-            <Route path="/home" element={<ShopHomepage />} />
-            <Route path="/profile" element={<ShopProfile />} />
-            <Route path="/product" element={<ProductAdding />} />
-            <Route path="/viewproducts" element={<ViewProducts />} />
-            <Route path="/productdetails/:id" element={<ProductDetails />} />
-            <Route path="/addvariant/:id" element={<AddVariants />} />
-            <Route path="/viewvariants/:id" element={<ViewVariants />} />
-            <Route path="/addsizeandimage/:id" element={<AddSizeAndImage />} />
-            <Route path="/addstock/:id" element={<ManageStock />} />
-            <Route path="/orders" element={<ShopOrders />} />
-            <Route path="/order-details/:orderItemId" element={<OrderDetails/>} />
+            <Route path="/home" element={
+                <ShopProtected>
+                    <ShopHomepage />
+                </ShopProtected>
+              }
+            />
+                
+            <Route path="/profile" element={
+                <ShopProtected>
+                    <ShopProfile />
+                </ShopProtected>
+            } />
+
+            <Route path="/product" element={
+                <ShopProtected>
+                    <ProductAdding />
+                </ShopProtected>
+            } />
+
+            <Route path="/viewproducts" element={
+                <ShopProtected>
+                    <ViewProducts />
+                </ShopProtected>
+            } />
+
+            <Route path="/productdetails/:id" element={
+                <ShopProtected>
+                    <ProductDetails />
+                </ShopProtected>
+            } />
+            <Route path="/addvariant/:id" element={
+                <ShopProtected>
+                    <AddVariants />
+                </ShopProtected>
+            } />
+
+            <Route path="/viewvariants/:id" element={
+                <ShopProtected>
+                    <ViewVariants />
+                </ShopProtected>
+            } />
+            
+            <Route path="/addsizeandimage/:id" element={
+                <ShopProtected>
+                    <AddSizeAndImage />
+                </ShopProtected>
+            } />
+
+            <Route path="/addstock/:id" element={
+                <ShopProtected>
+                    <ManageStock />
+                </ShopProtected>
+            } />
+            <Route path="/orders" element={
+                <ShopProtected>
+                    <ShopOrders />
+                </ShopProtected>
+            } />
+            <Route path="/order-details/:orderItemId" element={
+                <ShopProtected>
+                    <OrderDetails/>
+                </ShopProtected>
+            } />
         </Routes>
     )
 }

@@ -5,7 +5,10 @@ import profile from '../../../../assets/images/profile.jpg'
 import { IoMdNotifications, IoMdSettings } from 'react-icons/io'
 import { CgProfile } from 'react-icons/cg'
 import { MdOutlineLogout, MdSupportAgent } from 'react-icons/md'
+import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
 const NavBar = () => {
+  const navigate =  useNavigate();
   const [open, setOpen] = useState(false);
 
   const [openNotification, setOpenNotification] = useState(false);
@@ -28,6 +31,14 @@ const NavBar = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+
+  const handleLogout = () => {
+      sessionStorage.clear();
+      toast.info("Logged out successfully");
+     navigate('/login', { replace : true})
+      
+    }
 
   return (
     <div className={styles.navbar_container}>
@@ -61,7 +72,7 @@ const NavBar = () => {
             <span className={styles.option_text}>Support</span>
           </div>
           <div className={styles.divider}></div>
-          <div className={styles.menu_options}>
+          <div className={styles.menu_options} onClick={handleLogout}>
             <MdOutlineLogout className={styles.option_icons_logout} />
             <span className={styles.option_text}>Logout</span>
           </div>

@@ -1,12 +1,24 @@
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
 import styles from "./Navbar.module.css";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import { CiShop } from "react-icons/ci";
 import { ImProfile } from "react-icons/im";
 import { CgProfile } from "react-icons/cg";
+import { MdLogout } from "react-icons/md";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
+
+  const navigate =  useNavigate();
+
+  const handleLogout = () => {
+      sessionStorage.clear();
+      toast.info("Logged out successfully");
+     navigate('/login', { replace : true})
+      
+    }
+
   return (
     <nav className={styles.navbarContainer}>
       <div className={styles.navbarWrapper}>
@@ -41,6 +53,11 @@ const Navbar = () => {
               <CgProfile className={styles.navIocns} />
             </button>
           </Link>
+
+          <button className={styles.logoutButton} onClick={handleLogout}>
+            <MdLogout className={styles.logoutIcons} />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </nav>
