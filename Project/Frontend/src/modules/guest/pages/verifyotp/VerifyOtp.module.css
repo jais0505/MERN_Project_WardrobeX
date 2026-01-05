@@ -1,0 +1,125 @@
+.container {
+  min-height: 100vh;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.otpCard {
+  background: #ffffff;
+  width: 100%;
+  max-width: 400px;
+  padding: 48px 32px;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.iconCircle {
+  width: 70px;
+  height: 70px;
+  background-color: #000;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.otpInput {
+  width: 100%;
+  letter-spacing: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  padding: 16px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: #fdfdfd;
+}
+
+.otpInput:focus {
+  border-color: #000;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.03);
+}
+
+.otpInput::placeholder {
+  letter-spacing: normal;
+  font-size: 20px;
+  color: #ccc;
+  font-weight: 400;
+}
+
+.verifyBtn {
+  width: 100%;
+  padding: 16px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.verifyBtn:hover {
+  background: #222;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.footer {
+  margin-top: 24px;
+}
+
+.footer p {
+  font-size: 13px;
+  color: #999;
+}
+
+.footer span {
+  color: #000;
+  font-weight: 700;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  color: #000;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .otpCard {
+    padding: 32px 20px;
+  }
+}

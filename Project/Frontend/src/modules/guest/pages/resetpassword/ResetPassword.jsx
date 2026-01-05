@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -6,7 +6,8 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import styles from "./ResetPassword.module.css";
 
 export default function ResetPassword() {
-  const { token } = useParams();
+  const location = useLocation();
+const userId = location.state?.userId;
   const navigate = useNavigate();
 
   const [password, setPassword] = useState("");
@@ -25,8 +26,11 @@ export default function ResetPassword() {
     try {
       setLoading(true);
       const res = await axios.post(
-        `http://localhost:5000/reset-password/${token}`,
-        { newPassword: password }
+        `http://localhost:5000/reset-password/`,{
+          userId,
+          newPassword: password
+        }
+        
       );
 
       toast.success(res.data.message || "Password updated successfully!");

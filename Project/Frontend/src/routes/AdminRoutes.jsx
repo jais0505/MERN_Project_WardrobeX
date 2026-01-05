@@ -16,6 +16,8 @@ import Refunds from '../modules/admin/pages/refunds/Refunds'
 import AdminComplaints from '../modules/admin/pages/admincomplaints/AdminComplaints'
 import AdminProtected from '../modules/admin/components/AdminProtected'
 import AdminProfile from '../modules/admin/pages/adminprofile/AdminProfile'
+import AdminEditProfile from '../modules/admin/pages/admineditprofile/AdminEditProfile'
+import AdminChangePassword from '../modules/admin/pages/adminchangepassword/AdminChangePassword'
 
 const AdminRoutes = () => (
   <Routes>
@@ -111,6 +113,18 @@ const AdminRoutes = () => (
      <Route path="/profile" element={
       <AdminProtected>
         <AdminProfile />
+      </AdminProtected>
+    } />
+
+    <Route path="/editprofile" element={
+      <AdminProtected>
+        <AdminEditProfile />
+      </AdminProtected>
+    } />
+
+    <Route path="/changepassword" element={
+      <AdminProtected>
+        <AdminChangePassword />
       </AdminProtected>
     } />
   </Routes>

@@ -7,6 +7,7 @@ import { CgProfile } from "react-icons/cg";
 import { MdOutlineLogout, MdSupportAgent } from "react-icons/md";
 import { toast } from "react-toastify";
 import { NavLink, useNavigate } from "react-router";
+import { BsFillPersonFill } from "react-icons/bs";
 const NavBar = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -49,18 +50,18 @@ const NavBar = () => {
         />
       </div>
       <div className={styles.notification}>
-        <IoMdNotifications
+        {/* <IoMdNotifications
           className={styles.notification_icon}
           onClick={() => setOpenNotification(!openNotification)}
-        />
+        /> */}
       </div>
       <div
         ref={profileRef}
         className={styles.profile_container}
         onClick={() => setOpen(!open)}
       >
-        <img src={profile} alt="Profile" className={styles.profile_img} />
-        <span className={styles.profile_name}>James Morgan</span>
+        <BsFillPersonFill size={30}/>
+        <span className={styles.profile_name}>Jais Joses</span>
       </div>
 
       {open && (
@@ -74,6 +75,10 @@ const NavBar = () => {
             <div className={styles.menu_options}>
               <IoMdSettings className={styles.option_icons} />
               <span className={styles.option_text}>Settings</span>
+            </div>
+            <div className={styles.menu_options} onClick={() => setOpenNotification(!openNotification)}>
+              <IoMdNotifications className={styles.option_icons} />
+              <span className={styles.option_text}>Notifications</span>
             </div>
             <div className={styles.menu_options}>
               <MdSupportAgent className={styles.option_icons} />

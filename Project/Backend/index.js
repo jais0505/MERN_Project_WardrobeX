@@ -19,6 +19,7 @@ const razorpay = new Razorpay({
 // const bodyParser = require("body-parser");
 const port = 5000;
 const multer = require("multer");
+const { type } = require("os");
 
 const PATH = "./public/images";
 const upload = multer({
@@ -120,31 +121,31 @@ adminSchemaStructure.methods.comparePassword = async function (
 
 const Admin = mongoose.model("admincollection", adminSchemaStructure);
 
-app.post("/Admin", async (req, res) => {
-  try {
-    const { adminName, adminEmail, adminContact, adminPassword } = req.body;
+  app.post("/Admin", async (req, res) => {
+    try {
+      const { adminName, adminEmail, adminContact, adminPassword } = req.body;
 
-    let admin = await Admin.findOne({ adminEmail });
+      let admin = await Admin.findOne({ adminEmail });
 
-    if (admin) {
-      return res.json({ message: "Admin already exists" });
+      if (admin) {
+        return res.json({ message: "Admin already exists" });
+      }
+
+      admin = new Admin({
+        adminName,
+        adminEmail,
+        adminContact,
+        adminPassword,
+      });
+
+      await admin.save();
+
+      res.json({ mesasge: "Admin registered successfully" });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error");
     }
-
-    admin = new Admin({
-      adminName,
-      adminEmail,
-      adminContact,
-      adminPassword,
-    });
-
-    await admin.save();
-
-    res.json({ mesasge: "Admin inserted successfully" });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-});
+  });
 
 app.get("/Admin", async (req, res) => {
   try {
@@ -164,7 +165,7 @@ app.get("/Admin", async (req, res) => {
 app.get("/AdminById/:id", async (req, res) => {
   try {
     const adminId = req.params.id;
-    const admin = await Admin.findById(adminId);
+    const admin = await Admin.findById(adminId).select("-adminPassword");
 
     if (!admin) {
       return res.send({ mesasge: "Admin not found", admin: {} });
@@ -214,6 +215,61 @@ app.put("/Admin/:id", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+//Admin edit profile
+app.put("/AdminUpdate/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { adminName, adminContact } = req.body;
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(
+      id,
+      { adminName, adminContact },
+      { new: true, select: "-adminPassword" } // return updated without password
+    );
+
+    if (!updatedAdmin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      admin: updatedAdmin,
+    });
+  } catch (err) {
+    console.error("Admin Update Error", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//Admin Password Change
+app.put("/AdminChangePassword/:id", async (req, res) => {
+  try {
+    const adminId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // compare old password using schema method
+    const isMatch = await admin.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    admin.adminPassword = newPassword;
+
+    await admin.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Change Password Error", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 const shopSchemaStructure = new mongoose.Schema({
   shopName: {
@@ -667,6 +723,12 @@ const userSchemaStructure = new mongoose.Schema({
     ref: "placecollection",
     // required: true
   },
+  loginOtp: {
+    type: String
+  },
+  loginOtpExpiry: {
+    type: Date
+  }
 });
 
 userSchemaStructure.pre("save", async function (next) {
@@ -824,111 +886,60 @@ app.post("/forgot-password", async (req, res) => {
 
     const user = await User.findOne({ userEmail: email });
     if (!user) {
-      console.log("User with this email does not exist", email);
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Generate token
-    const token = crypto.randomBytes(32).toString("hex");
+    // ✅ Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 1000 * 60 * 15; // 15 mins
+    user.resetToken = otp;
+    user.resetTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-
-    // ✨ HTML EMAIL (your style)
     const content = `
-<html>
-<head>
-<title>Password Reset</title>
-<style>
-.container{
- width:90%;
- max-width:600px;
- margin:0 auto;
- padding:20px;
- background:#f2f2f2;
- font-family:Arial;
-}
-.box{
- background:#fff;
- padding:25px;
- border-radius:10px;
- text-align:center;
-}
-.title{
- font-size:22px;
- font-weight:bold;
-}
-.link{
- margin-top:15px;
- font-size:16px;
-}
-.button{
- display:inline-block;
- margin-top:15px;
- padding:10px 20px;
- background:#007bff;
- color: #fff;
- border-radius:5px;
- text-decoration:none;
- font-weight:bold;
-}
-.note{
- font-size:13px;
- color:#777;
- margin-top:10px;
-}
-</style>
-</head>
+      <h2>Password Reset OTP</h2>
+      <p>Your OTP is:</p>
+      <h1>${otp}</h1>
+      <p>This OTP is valid for 10 minutes.</p>
+    `;
 
-<body>
-<div class="container">
-<div class="box">
-<div class="title">Password Reset Request</div>
-<p>You requested to reset your password.</p>
+    sendEmail(user.userEmail, content, "Password Reset OTP");
 
-<div class="link">
-Click the button below to reset your password:
-</div>
-
-<a class="button" href="${resetLink}" target="_blank">
-Reset Password
-</a>
-
-<p class="note">
-If you didn’t request this, just ignore this mail.<br>
-This link is valid for 15 minutes.
-</p>
-</div>
-</div>
-</body>
-</html>
-`;
-
-    // ⛳ YOUR FUNCTION
-    sendEmail(user.userEmail, content, "Reset Password");
-
-    res.json({ message: "Reset link sent to your email" });
+    res.json({
+      message: "OTP sent to your email",
+      userId: user._id, // IMPORTANT
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server Error" });
   }
 });
 
-app.post("/reset-password/:token", async (req, res) => {
+app.post("/verify-reset-otp", async (req, res) => {
+  const { userId, otp } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (
+    !user ||
+    user.resetToken !== otp ||
+    user.resetTokenExpiry < Date.now()
+  ) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  res.json({ message: "OTP verified" });
+});
+
+
+
+app.post("/reset-password", async (req, res) => {
   try {
-    const token = req.params.token;
-    const { newPassword } = req.body;
+    const { userId, newPassword } = req.body;
 
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
-    });
-
+    const user = await User.findById(userId);
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     user.userPassword = newPassword;
@@ -937,12 +948,12 @@ app.post("/reset-password/:token", async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "Password Reset Successfully" });
+    res.json({ message: "Password reset successful" });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: "Server Error" });
   }
 });
+
 
 const productSchemaStructure = new mongoose.Schema({
   shopId: {
@@ -4545,19 +4556,35 @@ app.post("/Login", async (req, res) => {
   const shop = await Shop.findOne({ shopEmail: email });
 
   if (user) {
-    const isMatch = await user.comparePassword(password);
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    return res.send({
-      role: "user",
-      id: user._id,
-      name: user.userName,
-      message: "Login successful",
-    });
-  } else if (admin) {
+      user.loginOtp = otp;
+      user.loginOtpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+      await user.save();
+
+      // Send OTP Email
+      const html = `
+        <h3>User Login Verification</h3>
+        <p>Your OTP is:</p>
+        <h2>${otp}</h2>
+        <p>Valid for 5 minutes</p>
+      `;
+
+      sendEmail(user.userEmail, html, "Login OTP");
+
+      return res.json({
+        role: "user",
+        step: "otp",
+        userId: user._id,
+        message: "OTP sent to your email",
+      });
+    } else if (admin) {
     const isMatch = await admin.comparePassword(password);
 
     if(!isMatch) {
@@ -4599,6 +4626,40 @@ app.post("/Login", async (req, res) => {
     return res.status(401).json({ message: "Invalid email or passowrd" });
   }
 });
+
+//Otp-Verification
+app.post("/VerifyUserLoginOtp", async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    const user = await User.findOne({
+      _id: userId,
+      loginOtp: otp,
+      loginOtpExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Clear OTP
+    user.loginOtp = undefined;
+    user.loginOtpExpiry = undefined;
+    await user.save();
+
+    res.json({
+      role: "user",
+      id: user._id,
+      name: user.userName,
+      message: "Login successful",
+    });
+
+  } catch (err) {
+    console.error("OTP verify error", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 app.put("/ChangePassword/:id", async (req, res) => {
   try {

@@ -6,6 +6,8 @@ import GuestHome from '../modules/guest/pages/home/GuestHome'
 import ShopRegistration from '../modules/guest/pages/shopRegistration/ShopRegistration'
 import ForgotPassword from '../modules/guest/pages/forgotpassword/ForgotPassword'
 import ResetPassword from '../modules/guest/pages/resetpassword/ResetPassword'
+import VerifyOtp from '../modules/guest/pages/verifyotp/VerifyOtp'
+import VerifyResetOtp from '../modules/guest/pages/verifyresetotp/VerifyResetOtp'
 
 const GuestRoutes = () => {
   return (
@@ -15,8 +17,9 @@ const GuestRoutes = () => {
         <Route path="/userreg" element={<UserRegistration />} />
         <Route path="/shopreg" element={<ShopRegistration />}/>
         <Route path="/forgot-password" element={<ForgotPassword />}/>
-        <Route path="/reset-password/:token" element={<ResetPassword />}/>
-        {/* <Route path="/hero" element={<Hero />}/> */}
+        <Route path="/reset-password" element={<ResetPassword />}/>
+        <Route path="/verify-otp" element={<VerifyOtp />}/>
+        <Route path="/verify-reset-otp" element={<VerifyResetOtp />}/>
     </Routes>
   )
 }

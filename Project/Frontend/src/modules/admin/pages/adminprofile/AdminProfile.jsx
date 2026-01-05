@@ -1,58 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FiUser, FiMail, FiPhone, FiEdit2, FiLock } from 'react-icons/fi';
 import styles from './AdminProfile.module.css';
+import { FaChartBar } from 'react-icons/fa';
+import { SlLock } from 'react-icons/sl';
+import { RiVerifiedBadgeFill } from 'react-icons/ri';
+import { useNavigate } from 'react-router';
 
 const AdminProfile = () => {
-  // Sample admin data - replace with actual data from API/context
-  const [adminData] = useState({
-    name: 'John Anderson',
-    email: 'admin@example.com',
-    contact: '+91 98765 43210',
-    role: 'Administrator',
-    joinedDate: 'January 2024'
-  });
+  
+  const adminId = sessionStorage.getItem("aid");
 
-  const handleEditProfile = () => {
-    console.log('Edit Profile clicked');
-    // Navigate to edit profile page or open modal
-  };
+  const [adminData, setAdminData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleChangePassword = () => {
-    console.log('Change Password clicked');
-    // Navigate to change password page or open modal
-  };
+  const navigate = useNavigate();
+
+  useEffect(() => {
+
+    const fetchAdmin = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/AdminById/${adminId}`
+        );
+        setAdminData(res.data.admin);
+      } catch (err) {
+        console.log("Admin fetch error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (adminId) fetchAdmin();
+  }, [adminId]);
+
+  if (loading) return <h2 style={{textAlign:"center"}}>Loading...</h2>;
+
+  if (!adminData) return <h2 style={{textAlign:"center"}}>Admin not found</h2>;
 
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
-        {/* Header */}
+        
         <div className={styles.header}>
           <h1 className={styles.pageTitle}>Admin Profile</h1>
           <p className={styles.pageSubtitle}>Manage your account information</p>
         </div>
 
-        {/* Profile Card */}
         <div className={styles.profileCard}>
-          {/* Avatar Section */}
+          
           <div className={styles.avatarSection}>
             <div className={styles.avatar}>
               <FiUser size={48} />
             </div>
             <div className={styles.roleInfo}>
-              <h2 className={styles.adminName}>{adminData.name}</h2>
-              <span className={styles.roleBadge}>{adminData.role}</span>
+              <h2 className={styles.adminName}>{adminData.adminName}</h2>
+              <span className={styles.roleBadge}>Administrator</span>
             </div>
           </div>
 
-          {/* Info Grid */}
           <div className={styles.infoGrid}>
+            
             <div className={styles.infoCard}>
               <div className={styles.infoIconWrapper}>
                 <FiUser size={24} />
               </div>
               <div className={styles.infoContent}>
                 <span className={styles.infoLabel}>Full Name</span>
-                <span className={styles.infoValue}>{adminData.name}</span>
+                <span className={styles.infoValue}>{adminData.adminName}</span>
               </div>
             </div>
 
@@ -62,7 +77,7 @@ const AdminProfile = () => {
               </div>
               <div className={styles.infoContent}>
                 <span className={styles.infoLabel}>Email Address</span>
-                <span className={styles.infoValue}>{adminData.email}</span>
+                <span className={styles.infoValue}>{adminData.adminEmail}</span>
               </div>
             </div>
 
@@ -72,62 +87,58 @@ const AdminProfile = () => {
               </div>
               <div className={styles.infoContent}>
                 <span className={styles.infoLabel}>Contact Number</span>
-                <span className={styles.infoValue}>{adminData.contact}</span>
-              </div>
-            </div>
-
-            <div className={styles.infoCard}>
-              <div className={styles.infoIconWrapper}>
-                <FiUser size={24} />
-              </div>
-              <div className={styles.infoContent}>
-                <span className={styles.infoLabel}>Member Since</span>
-                <span className={styles.infoValue}>{adminData.joinedDate}</span>
+                <span className={styles.infoValue}>{adminData.adminContact}</span>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className={styles.actionButtons}>
-            <button className={styles.btnEditProfile} onClick={handleEditProfile}>
+            <button className={styles.btnEditProfile} onClick={() => navigate('/admin/editprofile')}>
               <FiEdit2 size={20} />
               <span>Edit Profile</span>
             </button>
-            <button className={styles.btnChangePassword} onClick={handleChangePassword}>
+            <button className={styles.btnChangePassword} onClick={() => navigate('/admin/changepassword')}>
               <FiLock size={20} />
               <span>Change Password</span>
             </button>
           </div>
         </div>
 
-        {/* Additional Info */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>📊</div>
+            <div className={styles.statIcon}>
+              <FaChartBar />
+            </div>
             <div className={styles.statContent}>
               <span className={styles.statValue}>Admin Access</span>
               <span className={styles.statLabel}>Full System Control</span>
             </div>
           </div>
+
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>🔒</div>
+            <div className={styles.statIcon}>
+              <SlLock />
+            </div>
             <div className={styles.statContent}>
               <span className={styles.statValue}>Secure Account</span>
-              <span className={styles.statLabel}>2FA Enabled</span>
+              <span className={styles.statLabel}>Password Protected</span>
             </div>
           </div>
+
           <div className={styles.statCard}>
-            <div className={styles.statIcon}>✅</div>
+            <div className={styles.statIcon}>
+              <RiVerifiedBadgeFill />
+            </div>
             <div className={styles.statContent}>
               <span className={styles.statValue}>Verified</span>
               <span className={styles.statLabel}>Email Confirmed</span>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
 };
-
 
 export default AdminProfile;
