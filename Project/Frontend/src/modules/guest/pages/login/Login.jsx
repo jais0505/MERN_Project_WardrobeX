@@ -24,12 +24,11 @@ const Login = () => {
         email,
         password,
       });
-      const { role, step, userId, id, name, message } = res.data;
+      const { role, step, id, name, message } = res.data;
 
       if (role === "user" && step === "otp") {
-        sessionStorage.setItem("tempUserId", userId);
         toast.success(message);
-        navigate("/verify-otp");
+        navigate("/verify-otp", { state: { userId: res.data.userId } });
       } else if (role === "admin") {
         sessionStorage.setItem("aid", id);
         sessionStorage.setItem("adminName", name);

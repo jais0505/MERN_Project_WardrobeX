@@ -16,6 +16,34 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const generateToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+};
+
+//JWT Auth MiddleWare
+const authMiddleware = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded; // { userId, role }
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+
 // const bodyParser = require("body-parser");
 const port = 5000;
 const multer = require("multer");
@@ -81,6 +109,12 @@ app.get("/Test", (req, res) => {
   console.log(req.body);
   res.send({ message: "Hi" });
 });
+ 
+
+
+
+
+
 
 const adminSchemaStructure = new mongoose.Schema({
   adminName: {
@@ -804,8 +838,9 @@ app.get("/User", async (req, res) => {
   }
 });
 
-app.get("/User/:id", async (req, res) => {
+app.get("/User/:id", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.userId;
     const user = await User.findById(req.params.id).populate("placeId");
     res.json({ user });
     if (user.length === 0) {
@@ -4628,17 +4663,20 @@ app.post("/Login", async (req, res) => {
 });
 
 //Otp-Verification
-app.post("/VerifyUserLoginOtp", async (req, res) => {
+app.post("/verify-otp", async (req, res) => {
   try {
     const { userId, otp } = req.body;
 
-    const user = await User.findOne({
-      _id: userId,
-      loginOtp: otp,
-      loginOtpExpiry: { $gt: Date.now() },
-    });
+    const user = await User.findById(userId);
 
     if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (
+      user.loginOtp !== otp ||
+      user.loginOtpExpiry < Date.now()
+    ) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
@@ -4647,18 +4685,28 @@ app.post("/VerifyUserLoginOtp", async (req, res) => {
     user.loginOtpExpiry = undefined;
     await user.save();
 
-    res.json({
+    // 🔐 CREATE JWT
+    const token = generateToken({
+      userId: user._id,
       role: "user",
-      id: user._id,
-      name: user.userName,
+    });
+
+    res.json({
       message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.userName,
+        email: user.userEmail
+      }
     });
 
   } catch (err) {
-    console.error("OTP verify error", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 app.put("/ChangePassword/:id", async (req, res) => {

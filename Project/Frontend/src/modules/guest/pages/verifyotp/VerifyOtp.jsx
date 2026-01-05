@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./VerifyOtp.module.css";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { BsFillShieldLockFill } from "react-icons/bs";
 
 const VerifyOtp = () => {
@@ -10,9 +10,12 @@ const VerifyOtp = () => {
   const [timer, setTimer] = useState(60);
   const navigate = useNavigate();
 
+  const location = useLocation();
+  const userId = location.state?.userId;
+
   
   // Retrieve the userId passed from the Login page
-  const userId = sessionStorage.getItem("tempUserId");
+  // const userId = sessionStorage.getItem("tempUserId");
 
   useEffect(() => {
     if (!userId) {
@@ -27,16 +30,16 @@ const VerifyOtp = () => {
   const handleVerify = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/VerifyUserLoginOtp", {
+      const res = await axios.post("http://localhost:5000/verify-otp", {
         userId,
         otp,
       });
       
       if (res.data) {
         // Store session like you did in Login
-        sessionStorage.setItem("uid", res.data.id);
-        sessionStorage.setItem("userName", res.data.name);
-        toast.success("Identity Verified!");
+        sessionStorage.setItem("token", res.data.token);
+        sessionStorage.setItem("userName", res.data.user.name);
+        toast.success("Login Successfully!");
         navigate("/user/home"); 
       }
     } catch (err) {
