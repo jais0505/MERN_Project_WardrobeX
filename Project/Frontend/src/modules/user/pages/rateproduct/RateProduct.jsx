@@ -11,6 +11,8 @@ const RateProduct = () => {
   const { orderItemId } = useParams();
   const location = useLocation();
 
+  const userToken = sessionStorage.getItem('token');
+
   const [productData, setProductData] = useState(
     location.state?.product || null
   );
@@ -46,11 +48,16 @@ const RateProduct = () => {
 
   try {
     const res = await axios.post('http://127.0.0.1:5000/review', {
-      userId: sessionStorage.getItem("uid"),
       orderItemId,
       ratingValue,
       reviewContent
-    });
+    },
+    {
+      headers: {
+       Authorization: `Bearer ${userToken}`,
+      }
+    }
+  );
 
     toast.info("Review submitted:", res.data);
     setSubmitted(true);

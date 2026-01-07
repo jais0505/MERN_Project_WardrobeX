@@ -854,9 +854,9 @@ app.get("/UserDataFetch", authMiddleware, async (req, res) => {
   }
 });
 
-app.get("/UserAddress/:id", async (req, res) => {
+app.get("/UserAddress", authMiddleware, async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.userId;
     const user = await User.findById(userId).select(
       "userName userContact userAddress"
     );
@@ -1896,9 +1896,9 @@ app.post("/Order", async (req, res) => {
   }
 });
 
-app.get("/Order/:userId", async (req, res) => {
+app.get("/Order", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.userId;
 
     const order = await Order.findOne({ userId, orderStatus: "inCart" });
 
@@ -1968,9 +1968,9 @@ app.get("/OrderPopulate", async (req, res) => {
 });
 
 //Fetching orders for myorders
-app.get("/order/user/:userId", async (req, res) => {
+app.get("/order/user", authMiddleware, async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.userId;
 
     const orders = await Order.find({
       userId,
@@ -2206,9 +2206,10 @@ const OrderItem = mongoose.model(
   orderItemSchemaStructure
 );
 
-app.post("/OrderItem", async (req, res) => {
+app.post("/OrderItem", authMiddleware, async (req, res) => {
   try {
-    const { userId, variantSizeId, orderItemPrice } = req.body;
+    const userId = req.user.userId;
+    const { variantSizeId, orderItemPrice } = req.body;
 
     if (
       !userId ||
@@ -2265,9 +2266,10 @@ app.post("/OrderItem", async (req, res) => {
   }
 });
 
-app.post("/buyNowOrder", async (req, res) => {
+app.post("/buyNowOrder", authMiddleware, async (req, res) => {
   try {
-    const { userId, product } = req.body;
+    const userId = req.user.userId;
+    const { product } = req.body;
 
     if (!userId || !product) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -3250,10 +3252,11 @@ app.get("/ComplaintPopulate", async (req, res) => {
 });
 
 //complaint creation
-app.post("/complaint/create/:orderItemId", async (req, res) => {
+app.post("/complaint/create/:orderItemId", authMiddleware, async (req, res) => {
   try {
     const { orderItemId } = req.params;
-    const { userId, complaintTitle, complaintDescription } = req.body;
+    const userId = req.user.userId;
+    const { complaintTitle, complaintDescription } = req.body;
 
     // 1️⃣ Validate Inputs
     if (!userId || !complaintTitle || !complaintDescription) {
@@ -3322,9 +3325,9 @@ app.post("/complaint/create/:orderItemId", async (req, res) => {
 });
 
 //Get comlpaints using userId
-app.get("/complaint/user/:userId", async (req, res) => {
+app.get("/complaint/user", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.userId;
     const complaints = await Complaint.find({ userId })
       .populate({
         path: "productId",
@@ -3586,9 +3589,10 @@ app.get("/RatingReviewPopulate", async (req, res) => {
 });
 
 //Rating & Review Api
-app.post("/review", async (req, res) => {
+app.post("/review", authMiddleware, async (req, res) => {
   try {
-    const { userId, orderItemId, ratingValue, reviewContent } = req.body;
+    const userId = req.user.userId;
+    const { orderItemId, ratingValue, reviewContent } = req.body;
 
     // 1️⃣ Order item with populated product
     const orderItem = await OrderItem.findById(orderItemId).populate({
@@ -4766,8 +4770,10 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-app.post("/verify-payment", async (req, res) => {
+app.post("/verify-payment", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.userId;
+
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -4777,7 +4783,6 @@ app.post("/verify-payment", async (req, res) => {
       contactNo,
       deliveryAddress,
       amount,
-      userId,
     } = req.body;
 
     console.log("Received orderId:", orderId);

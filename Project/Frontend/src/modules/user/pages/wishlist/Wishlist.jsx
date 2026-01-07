@@ -140,7 +140,7 @@ const Wishlist = () => {
             </p>
             <button 
               className={styles.shopNowBtn}
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/user/viewproducts')}
             >
               Continue Shopping
             </button>

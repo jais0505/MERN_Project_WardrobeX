@@ -330,3 +330,10 @@
   background-color: #fff3cd;
   color: #856404;
 }
+
+
+.statusDelivered {
+  background-color: #e6f9f0;
+  color: #0f9d58;
+  font-weight: 600;
+}

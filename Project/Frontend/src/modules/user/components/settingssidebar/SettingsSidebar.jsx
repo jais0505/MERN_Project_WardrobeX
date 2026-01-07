@@ -2,11 +2,14 @@ import { useState } from 'react'
 import styles from './SettingsSidebar.module.css'
 import { FaHome, FaUser, FaMapMarkerAlt, FaCreditCard, FaWallet, FaGift, FaChevronRight } from 'react-icons/fa'
 import { FaPowerOff } from 'react-icons/fa6'
+import { useNavigate } from 'react-router'
 
 const SettingsSidebar = () => {
   const [activeMenu, setActiveMenu] = useState('profile')
 
-  const userName = sessionStorage.getItem('userName') || 'User'
+  const userName = sessionStorage.getItem('userName') || 'User';
+
+  const navigate = useNavigate();
 
   return (
     <div className={styles.settings_sidebar}>
@@ -59,7 +62,7 @@ const SettingsSidebar = () => {
         <div className={styles.submenu}>
           <button
             className={`${styles.submenu_item} ${activeMenu === 'reviews' ? styles.active : ''}`}
-            onClick={() => setActiveMenu('reviews')}
+            onClick={() => na}
           >
             My Reviews & Ratings
           </button>

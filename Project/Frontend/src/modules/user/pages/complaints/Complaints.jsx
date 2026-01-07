@@ -16,13 +16,13 @@ const CreateComplaint = () => {
 
   // Get orderItemId passed from previous page
   const { orderItemId } = location.state || {};
-  const userId = sessionStorage.getItem("uid");
+  const userToken = sessionStorage.getItem("token");
 
   // Debug
   useEffect(() => {
     console.log("CreateComplaint Loaded");
     console.log("orderItemId:", orderItemId);
-    console.log("userId:", userId);
+    console.log("userToken:", userToken);
   }, []);
 
   // Context Data
@@ -59,14 +59,18 @@ const CreateComplaint = () => {
 
     try {
       const payload = {
-        userId,
         complaintTitle: formData.title,
         complaintDescription: formData.description,
       };
 
       await axios.post(
         `http://127.0.0.1:5000/complaint/create/${orderItemId}`,
-        payload
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
       );
 
       toast.success("Complaint submitted successfully");
@@ -96,8 +100,6 @@ const CreateComplaint = () => {
         <form onSubmit={handleSubmit} className={styles.complaintForm}>
           {/* Context UI */}
           <div className={styles.contextBox}>
-
-
             <div className={styles.contextItem}>
               <label>Order Item</label>
               <p>#{orderItemId?.slice(-8)}</p>

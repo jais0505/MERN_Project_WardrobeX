@@ -7,13 +7,17 @@ import { toast } from "react-toastify";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const userId = sessionStorage.getItem("uid");
+  const userToken = sessionStorage.getItem('token');
   const [order, setOrder] = useState("");
   const [cartItems, setCartItems] = useState([]);
 
   const fetchOrder = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/Order/${userId}`);
+      const res = await axios.get(`http://localhost:5000/Order`,{
+        headers: {
+          Authorization: `Bearer ${userToken}`
+        }
+      });
       if (res.data.order) {
         // console.log(res.data.order);
         setOrder(res.data.order);
@@ -103,7 +107,7 @@ const Cart = () => {
 
   useEffect(() => {
     fetchOrder();
-  }, [userId]);
+  }, [userToken]);
 
   useEffect(() => {
     console.log("OrderId:", order._id);

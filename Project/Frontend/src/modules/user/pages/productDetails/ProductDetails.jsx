@@ -15,7 +15,9 @@ const ProductDetails = () => {
   const [variants, setVariants] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [stock, setStock] = useState(null);
-  const userId = sessionStorage.getItem("uid");
+
+  const userToken = sessionStorage.getItem("token");
+
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const [selectedVariant, setSeletedVariant] = useState("");
@@ -176,13 +178,18 @@ const ProductDetails = () => {
 
   const checkWishlist = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/WishList/${userId}`);
+      const res = await axios.get(`http://localhost:5000/WishListDataFetch`,{
+        headers: {
+          Authorization: `Bearer ${userToken}`
+        }
+      });
 
       if (res.data.wishlist) {
         const isFound = res.data.wishlist?.some(
           (item) => item.productId._id === id
         );
         setIsWishlisted(isFound);
+        console.log("wishlist item founded");
       } else {
         console.log("No wishlist item founded");
       }
@@ -195,11 +202,10 @@ const ProductDetails = () => {
     try {
       if (isWishlisted) {
         // REMOVE FROM WISHLIST
-        const res = await axios.delete("http://localhost:5000/WishList", {
-          data: {
-            productId,
-            userId,
-          },
+        const res = await axios.delete(`http://localhost:5000/WishList/${productId}`, {
+          headers: {
+            Authorization: `Bearer ${userToken}`
+          }
         });
 
         setIsWishlisted(false);
@@ -209,8 +215,13 @@ const ProductDetails = () => {
         // ADD TO WISHLIST
         const res = await axios.post("http://localhost:5000/WishList", {
           productId,
-          userId,
-        });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+      );
 
         setIsWishlisted(true);
         toast.info(res.data.message);
@@ -225,10 +236,15 @@ const ProductDetails = () => {
     try {
       if (!selectedSize) return toast.warn("Please select a size");
       const res = await axios.post("http://localhost:5000/OrderItem", {
-        userId: userId,
         variantSizeId,
         orderItemPrice,
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      }
+    );
       console.log(res.data);
       if (res.data.action === "info") {
         toast.info(res.data.message);
@@ -259,13 +275,17 @@ const ProductDetails = () => {
         color: variants.find((v) => v._id === selectedVariant)?.colorId
           ?.colorName,
         image: mainImage,
-        userId: userId,
       };
 
       const res = await axios.post("http://localhost:5000/buyNowOrder", {
-        userId,
         product: buyNowItem,
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      }
+    );
 
       if (res.data.orderId) {
         navigate("/user/checkout", {

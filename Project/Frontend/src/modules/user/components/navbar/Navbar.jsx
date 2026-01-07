@@ -71,7 +71,7 @@ const Navbar = () => {
 
           {/* Dropdown Menu */}
           <div className={styles.profile_dropdown}>
-            <Link to="/user/profilesettings" className={styles.dropdown_item}>
+            <Link to="/user/profile" className={styles.dropdown_item}>
               <FaUser className={styles.dropdown_icon} />
               <span>My Profile</span>
             </Link>

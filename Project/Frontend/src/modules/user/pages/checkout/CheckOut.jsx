@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 const CheckOut = () => {
   const navigate = useNavigate();
-  const userId = sessionStorage.getItem("uid");
+  const userToken = sessionStorage.getItem('token');
   const location = useLocation();
 
   // Determine if checkout is for Cart or Buy Now
@@ -29,7 +29,12 @@ const CheckOut = () => {
   const fetchUserAddress = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/UserAddress/${userId}`
+        `http://localhost:5000/UserAddress`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
       );
       setUserInfo(res.data);
       setSelectedAddress(res.data.userAddress);
@@ -129,12 +134,13 @@ const CheckOut = () => {
     try {
       const verify = await fetch("http://localhost:5000/verify-payment", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+         },
         body: JSON.stringify({
           ...resData,
           orderId: orderId,
           amount: totals.total,
-          userId,
           userName: userInfo.userName,
           contactNo: userInfo.contactNo,
           deliveryAddress: selectedAddress,

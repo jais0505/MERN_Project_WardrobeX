@@ -1,18 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 const UserProtected = ({ children }) => {
   const navigate = useNavigate();
-  const token = sessionStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    const storedToken = sessionStorage.getItem('token');
+    if (!storedToken) {
       navigate("/login", { replace: true });
     }
-  }, [token, navigate]);
+    setLoading(false);
+  }, [navigate]);
 
-  if (!token) return null;
-
+  if (loading) return null;
   return children;
 };
 

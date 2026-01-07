@@ -10,18 +10,14 @@ import { useEffect } from 'react'
 
 const UserHomePage = () => {
 
-  const userToken = sessionStorage.getItem('token');
-  console.log("User Token:", userToken);
-
-
    const location = useLocation();
 
   const isHome = location.pathname === "/user/home" || location.pathname === "/";
 
   useEffect(() => {
   const handler = () => {
-    const uid = sessionStorage.getItem("uid");
-    if (!uid) window.location.replace("/login");
+    const token = sessionStorage.getItem("token");
+    if (!token) window.location.replace("/login");
   };
 
   window.addEventListener("pageshow", handler);

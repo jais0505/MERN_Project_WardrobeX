@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import axios from "axios";
 
 const MyOrders = () => {
-  const userId = sessionStorage.getItem("uid");
+  const userToken = sessionStorage.getItem("token");
 
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -13,11 +13,13 @@ const MyOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:5000/order/user/${userId}`
-        );
+        const res = await axios.get(`http://127.0.0.1:5000/order/user`, {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
         setOrders(res.data.orders || []);
-        // console.log("MYOrderData:", res.data.orders);
+        console.log("MYOrderData:", res.data.orders);
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
@@ -26,13 +28,14 @@ const MyOrders = () => {
     };
 
     fetchOrders();
-  }, [userId]);
+  }, [userToken]);
 
   const ORDER_STATUS_LABELS = {
     inCart: "In Cart",
     buyNow: "Order Initiated",
     paymentPending: "Payment Pending",
     paymentSuccess: "Order Placed",
+    delivered: "Delivered",
     partiallyCancelled: "Partially Cancelled",
     cancelled: "Order Cancelled",
     refunded: "Refunded",
@@ -83,12 +86,14 @@ const MyOrders = () => {
 
   const getOrderStatusClass = (status) => {
     switch (status) {
+      case "delivered":
+        return styles.statusDelivered; // ✅ ADD
       case "paymentSuccess":
         return styles.statusPayment;
       case "paymentPending":
         return styles.statusProcessing;
       case "partiallyCancelled":
-      return styles.statusPartial;
+        return styles.statusPartial;
       case "cancelled":
         return styles.statusCancelled;
       case "refunded":
@@ -96,6 +101,14 @@ const MyOrders = () => {
       default:
         return styles.statusDefault;
     }
+  };
+
+  const getDisplayOrderStatus = (order) => {
+    if (order?.previewItem?.itemStatus === "delivered") {
+      return "delivered";
+    }
+
+    return order.orderStatus;
   };
 
   const handleViewDetails = (orderId) => {
@@ -151,10 +164,10 @@ const MyOrders = () => {
                   <div className={styles.statusWrapper}>
                     <span
                       className={`${styles.statusBadge} ${getOrderStatusClass(
-                        order.orderStatus
+                        getDisplayOrderStatus(order)
                       )}`}
                     >
-                      {ORDER_STATUS_LABELS[order.orderStatus]}
+                      {ORDER_STATUS_LABELS[getDisplayOrderStatus(order)]}
                     </span>
 
                     {getOrderSummaryText(order) && (

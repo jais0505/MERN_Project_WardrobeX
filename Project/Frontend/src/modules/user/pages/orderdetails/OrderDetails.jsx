@@ -25,9 +25,13 @@ const OrderDetails = () => {
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
-        const userId = sessionStorage.getItem("uid");
+        const userToken = sessionStorage.getItem("token");
         const res = await axios.get(
-          `http://127.0.0.1:5000/complaint/user/${userId}`
+          `http://127.0.0.1:5000/complaint/user`,{
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            }
+          }
         );
 
         const map = {};

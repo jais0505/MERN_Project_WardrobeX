@@ -6,7 +6,7 @@ import styles from './ProfileSettings.module.css'
 const ProfileSettings = () => {
   return (
     <div className={styles.profilesettings}>
-        <SettingsSidebar />
+        {/* <SettingsSidebar /> */}
         <div className={styles.settings_hero}>
             <UserSettingsRoute />
         </div>
