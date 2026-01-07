@@ -838,14 +838,14 @@ app.get("/User", async (req, res) => {
   }
 });
 
-app.get("/User/:id", authMiddleware, async (req, res) => {
+app.get("/UserDataFetch", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await User.findById(req.params.id).populate("placeId");
+    const user = await User.findById(userId).populate("placeId");
     res.json({ user });
-    if (user.length === 0) {
-      return res.send({ message: "Users not found", user: [] });
-    } else {
+    if (!user.length) {
+      return res.send({ message: "User not found"});
+    } else {  
       res.send({ user }).status(200);
     }
   } catch {
@@ -892,13 +892,13 @@ app.delete("/User/:id", async (req, res) => {
   }
 });
 
-app.put("/User/:id", async (req, res) => {
+app.put("/UserEditProfile", authMiddleware, async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.user.userId;
     const { userName, userContact, userAddress, userLocation, placeId } =
       req.body;
 
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
       new: true,
     }).populate("placeId");
 
@@ -2953,9 +2953,10 @@ const wishListSchemaStructure = new mongoose.Schema({
 
 const WishList = mongoose.model("wishlistcollection", wishListSchemaStructure);
 
-app.post("/WishList", async (req, res) => {
+app.post("/WishList", authMiddleware, async (req, res) => {
   try {
-    const { userId, productId } = req.body;
+    const userId = req.user.userId;
+    const { productId } = req.body;
 
     let wishlist = await WishList.findOne({ userId, productId });
 
@@ -2977,9 +2978,9 @@ app.post("/WishList", async (req, res) => {
   }
 });
 
-app.get("/WishList/:userId", async (req, res) => {
+app.get("/WishListDataFetch", authMiddleware, async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.userId;
     const wishlist = await WishList.find({ userId })
       .populate({
         path: "productId",
@@ -3003,9 +3004,10 @@ app.get("/WishList/:userId", async (req, res) => {
 });
 
 // Deleted wishlist using productId and userId
-app.delete("/WishList", async (req, res) => {
+app.delete("/WishList/:productId", authMiddleware, async (req, res) => {
   try {
-    const { userId, productId } = req.body;
+    const userId = req.user.userId;
+    const productId = req.params.productId;
 
     if (!userId || !productId) {
       return res
@@ -3029,10 +3031,10 @@ app.delete("/WishList", async (req, res) => {
   }
 });
 
-// Deleted wishlist using productId and userId
-app.delete("/WishList/:id", async (req, res) => {
+// Deleted wishlist using wishListId
+app.delete("/WishListRemoveItem/:id", async (req, res) => {
   try {
-    const id = req.params.id;
+    const id = req.params.userId;
     const deleteItem = await WishList.findOneAndDelete(id);
 
     if (!deleteItem) {
@@ -4709,11 +4711,11 @@ app.post("/verify-otp", async (req, res) => {
 
 
 
-app.put("/ChangePassword/:id", async (req, res) => {
+app.put("/ChangePassword", authMiddleware, async (req, res) => {
   try {
-    const id = req.params.id;
+    const userId = req.user.userId;
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(id);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

@@ -9,7 +9,7 @@ const ViewProducts = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState([]);
-  const userId = sessionStorage.getItem('uid');
+  const userToken = sessionStorage.getItem('token');
   
   const [wishlist, setWishlist] = useState([]);
   const [searchQuery, setSearchQuery] = useState('')
@@ -42,7 +42,13 @@ const ViewProducts = () => {
 
   const fetchWishlist = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/WishList/${userId}`);
+    const res = await axios.get(`http://localhost:5000/WishListDataFetch`,
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`
+        }
+      }
+    );
     if (res.data.wishlist) {
       setWishlist(res.data.wishlist.map(item => item.productId._id));
       console.log(res.data.wishlist);
@@ -65,18 +71,27 @@ const ViewProducts = () => {
 
     if (isInWishlist) {
       // DELETE wishlist item
-      await axios.delete("http://localhost:5000/WishList", {
-        data: { userId, productId }
-      });
+      await axios.delete(`http://localhost:5000/WishList/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+    );
 
       setWishlist(prev => prev.filter(id => id !== productId));
 
     } else {
       // ADD wishlist item
       await axios.post("http://localhost:5000/WishList", {
-        userId,
         productId
-      });
+      },
+      {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+    );
 
       setWishlist(prev => [...prev, productId]);
     }

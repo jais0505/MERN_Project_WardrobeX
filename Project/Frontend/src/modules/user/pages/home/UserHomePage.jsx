@@ -13,6 +13,7 @@ const UserHomePage = () => {
   const userToken = sessionStorage.getItem('token');
   console.log("User Token:", userToken);
 
+
    const location = useLocation();
 
   const isHome = location.pathname === "/user/home" || location.pathname === "/";

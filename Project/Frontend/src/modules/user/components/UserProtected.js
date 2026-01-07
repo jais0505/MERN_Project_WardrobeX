@@ -1,15 +1,17 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 const UserProtected = ({ children }) => {
-  const uid = sessionStorage.getItem("uid");
+  const navigate = useNavigate();
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
-    if (!uid) {
-      window.location.replace("/login");
+    if (!token) {
+      navigate("/login", { replace: true });
     }
-  }, [uid]);
+  }, [token, navigate]);
 
-  if (!uid) return null;   
+  if (!token) return null;
 
   return children;
 };

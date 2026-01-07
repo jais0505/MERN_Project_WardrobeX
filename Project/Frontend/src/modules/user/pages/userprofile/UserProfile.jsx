@@ -1,21 +1,29 @@
-import { useEffect, useState } from 'react'
-import styles from './UserProfile.module.css'
-import { MdEdit, MdSave, MdClose, MdPerson, MdEmail, MdPhone, MdLocationOn } from 'react-icons/md'
-import { FaLocationDot } from 'react-icons/fa6'
-import { TbHome } from 'react-icons/tb'
-import axios from 'axios'
-import { RiLockPasswordLine } from 'react-icons/ri'
-import { toast } from 'react-toastify'
+import { useEffect, useState } from "react";
+import styles from "./UserProfile.module.css";
+import {
+  MdEdit,
+  MdSave,
+  MdClose,
+  MdPerson,
+  MdEmail,
+  MdPhone,
+  MdLocationOn,
+} from "react-icons/md";
+import { FaLocationDot } from "react-icons/fa6";
+import { TbHome } from "react-icons/tb";
+import axios from "axios";
+import { RiLockPasswordLine } from "react-icons/ri";
+import { toast } from "react-toastify";
 
 const UserProfile = () => {
-  const userId = sessionStorage.getItem('uid');
+  const userToken = sessionStorage.getItem("token");
   const [user, setUser] = useState("");
   const [places, setPlaces] = useState([]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   const [showPasswordPanel, setShowPasswordPanel] = useState(false);
@@ -30,27 +38,31 @@ const UserProfile = () => {
         setPasswordData({
           currentPassword: "",
           newPassword: "",
-          confirmPassword: ""
+          confirmPassword: "",
         });
       };
 
       // 1️⃣ Validate new password match
       if (newPassword !== confirmPassword) {
         toast.warn("New password mismatch");
-        resetAll();   // clear everything
+        resetAll(); // clear everything
         return;
       }
 
       // 2️⃣ API call (send only required fields)
       const res = await axios.put(
-        `http://localhost:5000/ChangePassword/${userId}`,
-        { currentPassword, newPassword }
+        `http://localhost:5000/ChangePassword`,
+        { currentPassword, newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
       );
 
       // 3️⃣ Success
       toast.success(res.data.message || "Password updated successfully");
-      resetAll();  // clear everything
-
+      resetAll(); // clear everything
     } catch (err) {
       console.error("Password update failed", err);
 
@@ -60,21 +72,21 @@ const UserProfile = () => {
       setPasswordData({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
       });
     }
   };
-
-
-
-
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({ ...user });
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/User/${userId}`);
+      const res = await axios.get(`http://localhost:5000/UserDataFetch`, {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
       if (res.data.user) {
         setUser(res.data.user);
         console.info(res.data.user);
@@ -82,12 +94,11 @@ const UserProfile = () => {
     } catch (err) {
       console.error("Error fetching userdetails", err);
     }
-  }
+  };
 
   useEffect(() => {
     setEditedUser({ ...user });
   }, [user]);
-
 
   const fetchPlaces = async () => {
     try {
@@ -106,9 +117,9 @@ const UserProfile = () => {
   }, []);
 
   const handleEdit = () => {
-    setIsEditing(true)
-    setEditedUser({ ...user })
-  }
+    setIsEditing(true);
+    setEditedUser({ ...user });
+  };
 
   const handleSave = async () => {
     try {
@@ -117,13 +128,22 @@ const UserProfile = () => {
         userContact: editedUser.userContact,
         userAddress: editedUser.userAddress,
         userLocation: editedUser.userLocation,
-        placeId: editedUser.placeId?._id
+        placeId: editedUser.placeId?._id,
       };
 
-      const res = await axios.put(`http://localhost:5000/User/${userId}`, body);
+      const res = await axios.put(
+        `http://localhost:5000/UserEditProfile`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+      );
 
       if (res.data.user) {
         setUser(res.data.user);
+        toast.success("Profile updated successfully");
       }
 
       setIsEditing(false);
@@ -132,18 +152,17 @@ const UserProfile = () => {
     }
   };
 
-
   const handleCancel = () => {
-    setIsEditing(false)
-    setEditedUser({ ...user })
-  }
+    setIsEditing(false);
+    setEditedUser({ ...user });
+  };
 
   const handleChange = (field, value) => {
-    setEditedUser(prev => ({
+    setEditedUser((prev) => ({
       ...prev,
-      [field]: value
-    }))
-  }
+      [field]: value,
+    }));
+  };
 
   return (
     <div className={styles.container}>
@@ -159,11 +178,13 @@ const UserProfile = () => {
                     <MdEdit /> Edit Profile
                   </button>
 
-                  <button className={styles.changepswbtn} onClick={() => setShowPasswordPanel(true)}>
+                  <button
+                    className={styles.changepswbtn}
+                    onClick={() => setShowPasswordPanel(true)}
+                  >
                     <RiLockPasswordLine /> Change password
                   </button>
                 </div>
-
               ) : (
                 <div className={styles.actionButtons}>
                   <button className={styles.saveBtn} onClick={handleSave}>
@@ -176,7 +197,6 @@ const UserProfile = () => {
               )}
             </div>
 
-
             <div className={styles.detailsGrid}>
               {/* Name */}
               <div className={styles.detailItem}>
@@ -188,7 +208,7 @@ const UserProfile = () => {
                   <input
                     type="text"
                     value={editedUser.userName}
-                    onChange={(e) => handleChange('userName', e.target.value)}
+                    onChange={(e) => handleChange("userName", e.target.value)}
                     className={styles.input}
                     placeholder="Enter your name"
                   />
@@ -222,7 +242,9 @@ const UserProfile = () => {
                   <input
                     type="tel"
                     value={editedUser.userContact}
-                    onChange={(e) => handleChange('userContact', e.target.value)}
+                    onChange={(e) =>
+                      handleChange("userContact", e.target.value)
+                    }
                     className={styles.input}
                     placeholder="Enter your contact number"
                   />
@@ -240,7 +262,9 @@ const UserProfile = () => {
                 {isEditing ? (
                   <textarea
                     value={editedUser.userAddress}
-                    onChange={(e) => handleChange('userAddress', e.target.value)}
+                    onChange={(e) =>
+                      handleChange("userAddress", e.target.value)
+                    }
                     className={styles.textarea}
                     placeholder="Enter your address"
                     rows="3"
@@ -259,7 +283,9 @@ const UserProfile = () => {
                   <input
                     type="text"
                     value={editedUser.userLocation}
-                    onChange={(e) => handleChange('userLocation', e.target.value)}
+                    onChange={(e) =>
+                      handleChange("userLocation", e.target.value)
+                    }
                     className={styles.input}
                   />
                 ) : (
@@ -280,7 +306,7 @@ const UserProfile = () => {
                     onChange={(e) =>
                       setEditedUser((prev) => ({
                         ...prev,
-                        placeId: places.find((p) => p._id === e.target.value)
+                        placeId: places.find((p) => p._id === e.target.value),
                       }))
                     }
                   >
@@ -291,9 +317,10 @@ const UserProfile = () => {
                       </option>
                     ))}
                   </select>
-
                 ) : (
-                  <p className={styles.detailValue}>{user.placeId?.placeName}</p>
+                  <p className={styles.detailValue}>
+                    {user.placeId?.placeName}
+                  </p>
                 )}
               </div>
             </div>
@@ -321,7 +348,10 @@ const UserProfile = () => {
                 placeholder="Enter current password"
                 value={passwordData.currentPassword}
                 onChange={(e) =>
-                  setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
                 }
                 className={styles.pwdInputField}
               />
@@ -334,39 +364,52 @@ const UserProfile = () => {
                 placeholder="Enter new password"
                 value={passwordData.newPassword}
                 onChange={(e) =>
-                  setPasswordData({ ...passwordData, newPassword: e.target.value })
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
                 }
                 className={styles.pwdInputField}
               />
             </div>
 
             <div className={styles.pwdInputBlock}>
-              <label className={styles.pwdInputLabel}>Confirm New Password</label>
+              <label className={styles.pwdInputLabel}>
+                Confirm New Password
+              </label>
               <input
                 type="password"
                 placeholder="Re-enter new password"
                 value={passwordData.confirmPassword}
                 onChange={(e) =>
-                  setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
                 }
                 className={styles.pwdInputField}
               />
             </div>
 
             <div className={styles.pwdButtonGroup}>
-              <button className={styles.pwdCancelBtn} onClick={() => setShowPasswordPanel(false)}>
+              <button
+                className={styles.pwdCancelBtn}
+                onClick={() => setShowPasswordPanel(false)}
+              >
                 Cancel
               </button>
-              <button className={styles.pwdUpdateBtn} onClick={handlePasswordChange}>
+              <button
+                className={styles.pwdUpdateBtn}
+                onClick={handlePasswordChange}
+              >
                 Update Password
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
-  )
-}
+  );
+};
 
-export default UserProfile
+export default UserProfile;

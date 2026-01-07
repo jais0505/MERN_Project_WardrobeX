@@ -8,12 +8,18 @@ import { toast } from 'react-toastify'
 
 const Wishlist = () => {
   const navigate = useNavigate();
-  const userId = sessionStorage.getItem('uid');
+  const userToken = sessionStorage.getItem('token');
   const [wishlistItems, setWishlistItems] = useState([]);
 
   const fetchWishListItems = async () => {
     try{
-      const res = await axios.get(`http://localhost:5000/WishList/${userId}`);
+      const res = await axios.get(`http://localhost:5000/WishListDataFetch`,
+        {
+        headers: {
+          Authorization: `Bearer ${userToken}`
+        }
+      }
+      );
       if(res.data.wishlist){
         setWishlistItems(res.data.wishlist);
         console.log(res.data.wishlist);
@@ -29,13 +35,14 @@ const Wishlist = () => {
     console.log('Removed product:', wishlistId)
     
     try{
-      const res = await axios.delete(`http://localhost:5000/WishList/${wishlistId}`);
+      const res = await axios.delete(`http://localhost:5000/WishListRemoveItem/${wishlistId}`);
       console.info("Info:", res.data.message);
       toast.info(res.data.message);
     } catch (err) {
       console.error("Error removing product from wishlist",err);
     }
   }
+
 
   useEffect(() => {
     fetchWishListItems();
