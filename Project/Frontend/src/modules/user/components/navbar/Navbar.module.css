@@ -253,7 +253,7 @@ font-weight: 600;
     cursor: pointer;
 }
 
-.nav_cart_count {
+.cart_count {
     position: absolute;
     top: -8px;
     right: -8px;

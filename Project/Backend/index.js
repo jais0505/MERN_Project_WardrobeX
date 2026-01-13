@@ -2154,6 +2154,37 @@ app.get("/order/details/:orderId", async (req, res) => {
   }
 });
 
+//Get cart count
+app.get("/cart/count", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // 1️⃣ Find user's active cart order
+    const order = await Order.findOne({
+      userId,
+      orderStatus: "inCart",
+    }).select("_id");
+
+    if (!order) {
+      return res.status(200).json({ count: 0 });
+    }
+
+    // 2️⃣ Count order items for this order
+    const count = await OrderItem.countDocuments({
+      orderId: order._id,
+    });
+
+    console.log("Cart item count:", count);
+
+    res.status(200).json({ count });
+  } catch (err) {
+    console.error("Cart count error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
 const orderItemSchemaStructure = new mongoose.Schema({
   orderId: {
     type: mongoose.Schema.Types.ObjectId,

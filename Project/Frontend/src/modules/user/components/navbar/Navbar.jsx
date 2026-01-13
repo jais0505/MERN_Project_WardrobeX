@@ -1,6 +1,6 @@
 import styles from './Navbar.module.css'
 import { BsCart3 } from 'react-icons/bs'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { IoMdSearch } from 'react-icons/io'
 import { HiMenu, HiX } from 'react-icons/hi'
@@ -9,11 +9,32 @@ import { FaBell, FaBox, FaGift, FaHeart, FaRegHeart, FaStar, FaTag, FaUser } fro
 import { TbCoinRupeeFilled } from 'react-icons/tb'
 import { IoLogOutOutline } from 'react-icons/io5'
 import { toast } from 'react-toastify'
+import axios from 'axios'
 
 const Navbar = () => {
   const [menu, setMenu] = useState("home");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const userName = sessionStorage.getItem('userName');
+  const userToken = sessionStorage.getItem('token');
+
+  const [cartCount, setCartCount] = useState(null);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/cart/count", {
+        headers: { Authorization: `Bearer ${userToken}` }
+      });
+      setCartCount(res.data.count);
+      console.log("CartCount:", cartCount);
+    } catch (err) {
+      console.error("Count fetch failed", err);
+    }
+  };
+  
+  if (userToken) fetchCount();
+}, [userToken]);
 
   const navigate =  useNavigate();
 
@@ -112,6 +133,9 @@ const Navbar = () => {
         <div className={styles.cart_wrapper}>
           <Link to="/user/cart" className={styles.nav_link}>
             <BsCart3 className={styles.cart_icon} />
+            <div className={styles.cart_count}>
+              {cartCount}
+            </div>
           </Link>
         </div>
 
